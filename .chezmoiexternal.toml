@@ -1,0 +1,17 @@
+[".oh-my-zsh"]
+    type = "archive"
+    url = "https://github.com/ohmyzsh/ohmyzsh/archive/master.tar.gz"
+    stripComponents = 1
+    refreshPeriod = "24h"
+
+[".oh-my-zsh/custom/plugins/zsh-autosuggestions"]
+    type = "archive"
+    url = "https://github.com/zsh-users/zsh-autosuggestions/archive/master.tar.gz"
+    exact = true
+    stripComponents = 1
+    refreshPeriod = "24h"
+
+[".config/nvim"]
+    type = "git-repo"
+    url = "git@github.com:woodjme/.conf-nvim.git"
+    refreshPeriod = "24h"
