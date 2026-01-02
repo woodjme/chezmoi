@@ -1,0 +1,9 @@
+[user]
+    name = {{ .name }}
+    email = {{ .email }}
+[core]
+    editor = nvim
+[diff]
+    tool = default-difftool
+[difftool "default-difftool"]
+    cmd = nvim -d $LOCAL $REMOTE

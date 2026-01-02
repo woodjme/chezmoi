@@ -1,0 +1,80 @@
+#!/bin/bash
+
+# Check if zsh is already installed
+if command -v zsh >/dev/null 2>&1; then
+    echo "zsh is already installed"
+
+    # Check if zsh is the default shell
+    if [ "$SHELL" != "$(which zsh)" ]; then
+        echo ""
+        echo "================================================"
+        echo "To make zsh your default shell, run:"
+        echo "  chsh -s $(which zsh)"
+        echo ""
+        echo "Then log out and log back in for changes to take effect."
+        echo "================================================"
+    fi
+    exit 0
+fi
+
+echo "Installing zsh..."
+
+{{- if eq .chezmoi.os "darwin" }}
+# macOS - zsh is included by default in modern macOS, but install via Homebrew if needed
+if command -v brew >/dev/null 2>&1; then
+    brew install zsh
+else
+    echo "Homebrew not found. zsh should be pre-installed on modern macOS."
+fi
+
+{{- else if eq .chezmoi.os "linux" }}
+# Linux - detect distribution
+{{- if eq .chezmoi.osRelease.id "fedora" }}
+# Fedora
+sudo dnf install -y zsh
+
+{{- else if eq .chezmoi.osRelease.id "debian" }}
+# Debian
+sudo apt-get update
+sudo apt-get install -y zsh
+
+{{- else if eq .chezmoi.osRelease.id "ubuntu" }}
+# Ubuntu
+sudo apt-get update
+sudo apt-get install -y zsh
+
+{{- else }}
+# Generic Linux - try common package managers
+if command -v dnf >/dev/null 2>&1; then
+    sudo dnf install -y zsh
+elif command -v apt-get >/dev/null 2>&1; then
+    sudo apt-get update && sudo apt-get install -y zsh
+elif command -v pacman >/dev/null 2>&1; then
+    sudo pacman -S --noconfirm zsh
+else
+    echo "Could not detect package manager. Please install zsh manually."
+    exit 1
+fi
+{{- end }}
+{{- end }}
+
+# Verify installation
+if command -v zsh >/dev/null 2>&1; then
+    echo "zsh installed successfully at: $(which zsh)"
+
+    # Check if zsh is already the default shell
+    if [ "$SHELL" != "$(which zsh)" ]; then
+        echo ""
+        echo "================================================"
+        echo "To make zsh your default shell, run:"
+        echo "  chsh -s $(which zsh)"
+        echo ""
+        echo "Then log out and log back in for changes to take effect."
+        echo "================================================"
+    else
+        echo "zsh is already your default shell"
+    fi
+else
+    echo "Failed to install zsh"
+    exit 1
+fi

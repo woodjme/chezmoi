@@ -1,0 +1,52 @@
+# Environment variables
+export EDITOR=nvim
+export PATH=$HOME/bin:/usr/local/bin:$PATH
+export ZSH="$HOME/.oh-my-zsh"
+
+{{- if eq .chezmoi.os "darwin" }}
+# macOS - Homebrew setup
+eval "$(~/homebrew/bin/brew shellenv)"
+{{- else if eq .chezmoi.os "linux" }}
+# Linux - tfenv PATH
+export PATH="$HOME/.tfenv/bin:$PATH"
+{{- end }}
+
+# Oh-my-zsh configuration
+DISABLE_AUTO_UPDATE="true"  # Managed by chezmoi
+ZSH_THEME="mytheme"
+HIST_STAMPS="dd.mm.yyyy"
+ZSH_CUSTOM=$ZSH/custom
+
+# Plugins
+plugins=(
+  git
+  zsh-autosuggestions
+  aws
+  terraform
+  kubectl
+)
+
+source $ZSH/oh-my-zsh.sh
+
+# Aliases
+alias dul='du -hs * | sort -h'
+
+# Terraform aliases
+alias tfp='echo "terraform plan -out="tfplan" " && terraform plan -out="tfplan"'
+alias tfa='echo terraform apply "tfplan" && terraform apply "tfplan"'
+alias tfi='echo terraform init && terraform init'
+
+{{- if eq .chezmoi.os "darwin" }}
+# macOS-specific aliases
+alias tailscale="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
+{{- end }}
+
+# fzf integration
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+# AWS SSO login helper
+aws-sso() {
+  local profile
+  profile=$(aws configure list-profiles | fzf --prompt="AWS Profile > " --height=40% --reverse)
+  [[ -n "$profile" ]] && aws sso login --profile "$profile"
+}
