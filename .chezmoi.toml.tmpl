@@ -1,6 +1,9 @@
 {{- $email := promptStringOnce . "email" "Git email address" -}}
 {{- $name := "Jamie Wood" -}}
+{{- $defaultSigningKey := "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDMzuluVQYwDIjFLc21/Hca2tAAmwsG4ARm5lfaSAbwfR5JTOnHCNpjuBfbHCOk02AIMIEHA7PoDpj9FdjhZnvcdVoJgLAwI+Z9m4slFO9lKeUOgEAS8mRKPftt7sIjpndW2+YQss+FfmAgRsJKaxYFK1aL5kHxpvkrVJhgcqMCzPrxd+0cIoFbyqFIQX6Zg+4/prfCZtcMaJe/JYO3ItnSw63vQnvDbfq2qDuwJUgXThQx66jArHaQ2ZSD0+rZmQeEBmJv2JhLbxCMMlbfmwNFhVuKT7LXam5toRvgIxONzqxZ+EhooUJrdg6pyKG5p2DiDQPXTni0QOkjcP5BkZylPrCq4L4CCF8mqzY/n2p2NgKboB1oQGNMxs4IpZ8gPIA7HZxtV1mF7tBNKD5N6gbHw5FTJpyNO1T8VASoGtX6d8nF+08tJODSoecqtU5XfeSr/Lfl6ZSI7WIPpQQe0zYxZz+PxP+W4XdyXmUNDbySlPxiutt4tddHNHyJrRL/YjiI9BhsEAnCsKKfar+pRlC3WxsGipy/x1/KpVCK+NyGx6vP2mb1hPVEklZw8zbTQe5MugTqNE8D179tIzLsTJkR18fEV3aFmOGV/sR4F4ME2Qt6rqJbWrpFa2vNeFtVOmmWYdfL5v3iIRKOQSgqmGImHZsIPoW+hJvAwS5FphYZAw==" -}}
+{{- $signingkey := promptStringOnce . "signingkey" "Git SSH signing key (press Enter for default)" $defaultSigningKey -}}
 
 [data]
     email = {{ $email | quote }}
     name = {{ $name | quote }}
+    signingkey = {{ $signingkey | quote }}
