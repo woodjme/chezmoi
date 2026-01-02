@@ -81,6 +81,9 @@ check_installed luarocks || brew install luarocks
 # 1password-cli
 check_installed op || brew install --cask 1password-cli
 
+# jq (JSON processor)
+check_installed jq || brew install jq
+
 {{- else if eq .chezmoi.os "linux" }}
 {{- if eq .chezmoi.osRelease.id "fedora" }}
 # Fedora installations
@@ -185,6 +188,11 @@ if ! check_installed op; then
     sudo rpm --import https://downloads.1password.com/linux/keys/1password.asc
     sudo sh -c 'echo -e "[1password]\nname=1Password Stable Channel\nbaseurl=https://downloads.1password.com/linux/rpm/stable/\$basearch\nenabled=1\ngpgcheck=1\nrepo_gpgcheck=1\ngpgkey=\"https://downloads.1password.com/linux/keys/1password.asc\"" > /etc/yum.repos.d/1password.repo'
     sudo dnf install -y 1password-cli
+fi
+
+# jq (JSON processor)
+if ! check_installed jq; then
+    sudo dnf install -y jq
 fi
 
 {{- else if or (eq .chezmoi.osRelease.id "debian") (eq .chezmoi.osRelease.id "ubuntu") }}
@@ -306,6 +314,11 @@ if ! check_installed op; then
     sudo apt-get install -y 1password-cli
 fi
 
+# jq (JSON processor)
+if ! check_installed jq; then
+    sudo apt-get install -y jq
+fi
+
 {{- else }}
 # Generic Linux
 echo -e "${YELLOW}Generic Linux detected. Attempting installation...${NC}"
@@ -391,3 +404,4 @@ command -v lazygit >/dev/null 2>&1 && echo "  - lazygit: $(lazygit --version 2>&
 command -v k9s >/dev/null 2>&1 && echo "  - k9s: $(k9s version -s 2>&1 | head -n1 | awk '{print $2}')"
 command -v luarocks >/dev/null 2>&1 && echo "  - luarocks: $(luarocks --version | head -n1 | cut -d' ' -f2)"
 command -v op >/dev/null 2>&1 && echo "  - 1password-cli: $(op --version)"
+command -v jq >/dev/null 2>&1 && echo "  - jq: $(jq --version | cut -d'-' -f2)"
