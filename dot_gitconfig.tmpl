@@ -6,6 +6,7 @@
     editor = nvim
 [pull]
     rebase = false
+{{- if .use1PasswordSign }}
 [commit]
     gpgsign = true
 [gpg]
@@ -16,6 +17,7 @@
 {{- else if eq .chezmoi.os "linux" }}
 [gpg "ssh"]
     program = /opt/1Password/op-ssh-sign
+{{- end }}
 {{- end }}
 [diff]
     tool = default-difftool
