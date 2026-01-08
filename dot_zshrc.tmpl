@@ -13,7 +13,7 @@ export PATH="$HOME/.tfenv/bin:$PATH"
 
 # Oh-my-zsh configuration
 DISABLE_AUTO_UPDATE="true"  # Managed by chezmoi
-ZSH_THEME="mytheme"
+ZSH_THEME=""  # Disabled - using Starship prompt
 HIST_STAMPS="dd.mm.yyyy"
 ZSH_CUSTOM=$ZSH/custom
 
@@ -50,3 +50,9 @@ aws-sso() {
   profile=$(aws configure list-profiles | fzf --prompt="AWS Profile > " --height=40% --reverse)
   [[ -n "$profile" ]] && aws sso login --profile "$profile"
 }
+
+# Initialize Starship prompt
+eval "$(starship init zsh)"
+
+# Disable oh-my-zsh RPROMPT interference
+unset RPROMPT

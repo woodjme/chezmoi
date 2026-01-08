@@ -1,0 +1,135 @@
+format = """$username$hostname${custom.company}${custom.dir}$git_branch$git_status$git_state$character"""
+right_format = """$terraform${custom.awsprofile}"""
+
+[character]
+success_symbol = "[➜](bold #98e024)"
+error_symbol = "[➜](bold #f4005f)"
+format = "$symbol "
+
+[username]
+style_user = "bold #98e024"
+style_root = "bold #f4005f"
+format = '[$user]($style)[@](bold #58d1eb)'
+disabled = false
+show_always = false
+
+[hostname]
+ssh_only = true
+style = "bold #58d1eb"
+format = '[$hostname]($style)[: ](bold #58d1eb)'
+disabled = false
+
+[directory]
+disabled = true
+
+[custom.company]
+command = '''
+if git rev-parse --show-toplevel &>/dev/null; then
+  repo_path=$(git rev-parse --show-toplevel)
+  repo_parent=$(dirname "$repo_path")
+
+  # Check if repo is under ~/git/
+  if [[ "$repo_parent" == "$HOME/git/"* ]] || [[ "$repo_parent" == "$HOME/git" ]]; then
+    company_name=$(basename "$repo_parent")
+    echo "${company_name}:"
+  fi
+fi
+'''
+when = "true"
+style = "bold #f4005f"
+format = '[$output]($style)'
+shell = ["bash", "--noprofile", "--norc"]
+
+[custom.dir]
+command = '''
+truncate_dir() {
+  local dir="$1"
+  local max_len=12
+  if [ ${#dir} -gt $max_len ]; then
+    local prefix="${dir:0:6}"
+    local suffix="${dir: -5}"
+    echo "${prefix}.${suffix}"
+  else
+    echo "$dir"
+  fi
+}
+
+if git rev-parse --show-toplevel &>/dev/null; then
+  repo_root=$(basename $(git rev-parse --show-toplevel))
+  repo_path=$(git rev-parse --show-toplevel)
+  current_dir=$(basename "$PWD")
+
+  # Get parent directory of repo (company name)
+  repo_parent=$(dirname "$repo_path")
+  company_name=$(basename "$repo_parent")
+
+  # Truncate long names
+  repo_root=$(truncate_dir "$repo_root")
+  current_dir=$(truncate_dir "$current_dir")
+
+  # Count directories between repo root and current dir
+  rel_path="${PWD#$repo_path/}"
+  if [ "$rel_path" = "$PWD" ]; then
+    # We are at repo root
+    echo "${repo_root}"
+  else
+    # Count slashes to get depth
+    depth=$(echo "$rel_path" | tr -cd '/' | wc -c)
+    depth=$((depth))
+
+    if [ $depth -eq 0 ]; then
+      # Directly in subdirectory of repo root
+      echo "${repo_root}/$current_dir"
+    elif [ $depth -eq 1 ]; then
+      # One intermediate directory - show its name
+      intermediate=$(dirname "$rel_path")
+      intermediate=$(truncate_dir "$intermediate")
+      echo "${repo_root}/$intermediate/$current_dir"
+    else
+      # Multiple intermediate directories - show count in brackets (including current dir)
+      echo "${repo_root}/[$((depth + 1))]/$current_dir"
+    fi
+  fi
+else
+  basename "$PWD"
+fi
+'''
+when = "true"
+style = "bold #58d1eb"
+format = '[$output]($style) '
+shell = ["bash", "--noprofile", "--norc"]
+
+[git_branch]
+symbol = "git:"
+style = "bold #9d65ff"
+format = '[$symbol](bold #9d65ff)[\(](bold #9d65ff)[$branch](bold #f4005f)[\)](bold #9d65ff) '
+
+[git_status]
+style = "bold #fd971f"
+format = '[$all_status$ahead_behind]($style) '
+conflicted = "!${count} "
+ahead = "↑${count}"
+behind = "↓${count}"
+diverged = "↕${ahead_count}/${behind_count}"
+untracked = "?${count} "
+stashed = "*${count} "
+modified = "~${count} "
+staged = "+${count} "
+renamed = "»${count} "
+deleted = "x${count} "
+
+[git_state]
+style = "bold #e0d561"
+format = '[\($state( $progress_current/$progress_total)\)]($style) '
+
+[terraform]
+symbol = "tf:"
+style = "bold #9d65ff"
+format = '[$symbol$workspace]($style) '
+
+[custom.awsprofile]
+command = 'if [ -n "$AWS_PROFILE" ]; then echo "aws:$AWS_PROFILE${AWS_PROFILE_REGION:+ ($AWS_PROFILE_REGION)}"; fi'
+when = "true"
+style = "bold #fd971f"
+format = '[$output]($style) '
+shell = ["bash", "--noprofile", "--norc"]

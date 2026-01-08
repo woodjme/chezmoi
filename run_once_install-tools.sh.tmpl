@@ -84,6 +84,9 @@ check_installed op || brew install --cask 1password-cli
 # jq (JSON processor)
 check_installed jq || brew install jq
 
+# starship (shell prompt)
+check_installed starship || brew install starship
+
 {{- else if eq .chezmoi.os "linux" }}
 {{- if eq .chezmoi.osRelease.id "fedora" }}
 # Fedora installations
@@ -193,6 +196,11 @@ fi
 # jq (JSON processor)
 if ! check_installed jq; then
     sudo dnf install -y jq
+fi
+
+# starship (shell prompt)
+if ! check_installed starship; then
+    curl -sS https://starship.rs/install.sh | sh -s -- -y
 fi
 
 {{- else if or (eq .chezmoi.osRelease.id "debian") (eq .chezmoi.osRelease.id "ubuntu") }}
@@ -319,6 +327,11 @@ if ! check_installed jq; then
     sudo apt-get install -y jq
 fi
 
+# starship (shell prompt)
+if ! check_installed starship; then
+    curl -sS https://starship.rs/install.sh | sh -s -- -y
+fi
+
 {{- else }}
 # Generic Linux
 echo -e "${YELLOW}Generic Linux detected. Attempting installation...${NC}"
@@ -405,3 +418,4 @@ command -v k9s >/dev/null 2>&1 && echo "  - k9s: $(k9s version -s 2>&1 | head -n
 command -v luarocks >/dev/null 2>&1 && echo "  - luarocks: $(luarocks --version | head -n1 | cut -d' ' -f2)"
 command -v op >/dev/null 2>&1 && echo "  - 1password-cli: $(op --version)"
 command -v jq >/dev/null 2>&1 && echo "  - jq: $(jq --version | cut -d'-' -f2)"
+command -v starship >/dev/null 2>&1 && echo "  - starship: $(starship --version | cut -d' ' -f2)"
