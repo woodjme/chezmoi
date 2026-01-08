@@ -11,7 +11,14 @@
     stripComponents = 1
     refreshPeriod = "24h"
 
+{{- if .useNvimSSH }}
 [".config/nvim"]
     type = "git-repo"
     url = "git@github.com:woodjme/.conf-nvim.git"
     refreshPeriod = "24h"
+{{- else }}
+[".config/nvim"]
+    type = "git-repo"
+    url = "https://github.com/woodjme/.conf-nvim.git"
+    refreshPeriod = "24h"
+{{- end }}
