@@ -286,8 +286,8 @@ if ! check_installed zip; then
     sudo apt-get install -y zip unzip
 fi
 
-# fd
-if ! check_installed fd; then
+# fd (note: command is 'fdfind' on Debian/Ubuntu)
+if ! check_installed fdfind && ! check_installed fd; then
     sudo apt-get install -y fd-find
 fi
 
@@ -416,7 +416,11 @@ command -v kubectl >/dev/null 2>&1 && echo "  - kubectl: $(kubectl version --cli
 command -v htop >/dev/null 2>&1 && echo "  - htop: $(htop --version | head -n1 | cut -d' ' -f2)"
 command -v btop >/dev/null 2>&1 && echo "  - btop: $(btop --version 2>&1 | head -n1 | sed -E 's/.*([0-9]+\.[0-9]+\.[0-9]+).*/\1/')"
 command -v curl >/dev/null 2>&1 && echo "  - curl: $(curl --version 2>&1 | head -n1 | cut -d' ' -f2)"
-command -v fd >/dev/null 2>&1 && echo "  - fd: $(fd --version 2>&1 | cut -d' ' -f2)"
+if command -v fd >/dev/null 2>&1; then
+    echo "  - fd: $(fd --version 2>&1 | cut -d' ' -f2)"
+elif command -v fdfind >/dev/null 2>&1; then
+    echo "  - fdfind: $(fdfind --version 2>&1 | cut -d' ' -f2)"
+fi
 command -v lazygit >/dev/null 2>&1 && echo "  - lazygit: $(lazygit --version 2>&1 | grep 'version=' | sed 's/.*version=//' | cut -d',' -f1 | head -n1)"
 command -v k9s >/dev/null 2>&1 && echo "  - k9s: $(k9s version -s 2>&1 | head -n1 | awk '{print $2}')"
 command -v luarocks >/dev/null 2>&1 && echo "  - luarocks: $(luarocks --version | head -n1 | cut -d' ' -f2)"
