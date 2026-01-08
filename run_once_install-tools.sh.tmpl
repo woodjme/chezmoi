@@ -135,6 +135,8 @@ if ! check_installed n; then
     if check_installed node && check_installed npm; then
         echo "Installing n via npm (Node.js already present)..."
         sudo npm install -g n
+    elif [ -d "$HOME/n" ]; then
+        echo -e "${YELLOW}n directory already exists, skipping installation${NC}"
     else
         echo "Installing n and Node.js..."
         curl -L https://bit.ly/n-install | bash -s -- -y
@@ -245,6 +247,8 @@ if ! check_installed n; then
     if check_installed node && check_installed npm; then
         echo "Installing n via npm (Node.js already present)..."
         sudo npm install -g n
+    elif [ -d "$HOME/n" ]; then
+        echo -e "${YELLOW}n directory already exists, skipping installation${NC}"
     else
         echo "Installing n and Node.js..."
         curl -L https://bit.ly/n-install | bash -s -- -y
