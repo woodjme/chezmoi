@@ -54,6 +54,22 @@ else
     echo -e "${GREEN}✓${NC} Brave browser is already installed"
 fi
 
+# Obsidian
+if ! brew list --cask obsidian >/dev/null 2>&1; then
+    echo "Installing Obsidian..."
+    brew install --cask obsidian
+else
+    echo -e "${GREEN}✓${NC} Obsidian is already installed"
+fi
+
+# Todoist
+if ! brew list --cask todoist >/dev/null 2>&1; then
+    echo "Installing Todoist..."
+    brew install --cask todoist
+else
+    echo -e "${GREEN}✓${NC} Todoist is already installed"
+fi
+
 {{- else if eq .chezmoi.os "linux" }}
 {{- if eq .chezmoi.osRelease.id "fedora" }}
 # Fedora installations
@@ -82,6 +98,36 @@ else
     echo -e "${GREEN}✓${NC} Brave browser is already installed"
 fi
 
+# Flatpak (usually pre-installed on Fedora)
+if ! check_installed flatpak; then
+    echo "Installing Flatpak..."
+    sudo dnf install -y flatpak
+else
+    echo -e "${GREEN}✓${NC} Flatpak is already installed"
+fi
+
+# Add Flathub repository
+if ! flatpak remotes | grep -q flathub; then
+    echo "Adding Flathub repository..."
+    flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+fi
+
+# Obsidian
+if ! flatpak list | grep -q "md.obsidian.Obsidian"; then
+    echo "Installing Obsidian..."
+    flatpak install -y flathub md.obsidian.Obsidian
+else
+    echo -e "${GREEN}✓${NC} Obsidian is already installed"
+fi
+
+# Todoist
+if ! flatpak list | grep -q "com.todoist.Todoist"; then
+    echo "Installing Todoist..."
+    flatpak install -y flathub com.todoist.Todoist
+else
+    echo -e "${GREEN}✓${NC} Todoist is already installed"
+fi
+
 {{- else if or (eq .chezmoi.osRelease.id "debian") (eq .chezmoi.osRelease.id "ubuntu") }}
 # Debian/Ubuntu installations
 
@@ -108,6 +154,37 @@ if ! check_installed brave-browser; then
     curl -fsS https://dl.brave.com/install.sh | sh
 else
     echo -e "${GREEN}✓${NC} Brave browser is already installed"
+fi
+
+# Flatpak
+if ! check_installed flatpak; then
+    echo "Installing Flatpak..."
+    sudo apt-get update
+    sudo apt-get install -y flatpak
+else
+    echo -e "${GREEN}✓${NC} Flatpak is already installed"
+fi
+
+# Add Flathub repository
+if ! flatpak remotes | grep -q flathub; then
+    echo "Adding Flathub repository..."
+    flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+fi
+
+# Obsidian
+if ! flatpak list | grep -q "md.obsidian.Obsidian"; then
+    echo "Installing Obsidian..."
+    flatpak install -y flathub md.obsidian.Obsidian
+else
+    echo -e "${GREEN}✓${NC} Obsidian is already installed"
+fi
+
+# Todoist
+if ! flatpak list | grep -q "com.todoist.Todoist"; then
+    echo "Installing Todoist..."
+    flatpak install -y flathub com.todoist.Todoist
+else
+    echo -e "${GREEN}✓${NC} Todoist is already installed"
 fi
 
 {{- else }}

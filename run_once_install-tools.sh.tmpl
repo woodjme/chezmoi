@@ -84,6 +84,18 @@ check_installed jq || brew install jq
 # starship (shell prompt)
 check_installed starship || brew install starship
 
+# tree-sitter
+check_installed tree-sitter || brew install tree-sitter
+
+# bat (modern cat)
+check_installed bat || brew install bat
+
+# e1s (AWS ECS CLI)
+if ! check_installed e1s; then
+    brew tap keidarcy/tap
+    brew install keidarcy/tap/e1s
+fi
+
 {{- else if eq .chezmoi.os "linux" }}
 {{- if eq .chezmoi.osRelease.id "fedora" }}
 # Fedora installations
@@ -193,6 +205,31 @@ fi
 # starship (shell prompt)
 if ! check_installed starship; then
     curl -sS https://starship.rs/install.sh | sh -s -- -y
+fi
+
+# tree-sitter
+if ! check_installed tree-sitter; then
+    sudo dnf install -y tree-sitter-cli
+fi
+
+# bat (modern cat)
+if ! check_installed bat; then
+    sudo dnf install -y bat
+fi
+
+# e1s (AWS ECS CLI)
+if ! check_installed e1s; then
+    ARCH=$(uname -m)
+    if [ "$ARCH" = "x86_64" ]; then
+        E1S_ARCH="amd64"
+    elif [ "$ARCH" = "aarch64" ]; then
+        E1S_ARCH="arm64"
+    fi
+    E1S_VERSION="1.0.52"
+    curl -sL "https://github.com/keidarcy/e1s/releases/download/v${E1S_VERSION}/e1s_${E1S_VERSION}_linux_${E1S_ARCH}.tar.gz" -o /tmp/e1s.tar.gz
+    tar -xzf /tmp/e1s.tar.gz -C /tmp
+    sudo mv /tmp/e1s /usr/local/bin/
+    rm /tmp/e1s.tar.gz
 fi
 
 {{- else if or (eq .chezmoi.osRelease.id "debian") (eq .chezmoi.osRelease.id "ubuntu") }}
@@ -314,6 +351,31 @@ if ! check_installed starship; then
     curl -sS https://starship.rs/install.sh | sh -s -- -y
 fi
 
+# tree-sitter
+if ! check_installed tree-sitter; then
+    sudo apt-get install -y tree-sitter-cli
+fi
+
+# bat (modern cat)
+if ! check_installed bat; then
+    sudo apt-get install -y bat
+fi
+
+# e1s (AWS ECS CLI)
+if ! check_installed e1s; then
+    ARCH=$(uname -m)
+    if [ "$ARCH" = "x86_64" ]; then
+        E1S_ARCH="amd64"
+    elif [ "$ARCH" = "aarch64" ]; then
+        E1S_ARCH="arm64"
+    fi
+    E1S_VERSION="1.0.52"
+    curl -sL "https://github.com/keidarcy/e1s/releases/download/v${E1S_VERSION}/e1s_${E1S_VERSION}_linux_${E1S_ARCH}.tar.gz" -o /tmp/e1s.tar.gz
+    tar -xzf /tmp/e1s.tar.gz -C /tmp
+    sudo mv /tmp/e1s /usr/local/bin/
+    rm /tmp/e1s.tar.gz
+fi
+
 {{- else }}
 # Generic Linux
 echo -e "${YELLOW}Generic Linux detected. Attempting installation...${NC}"
@@ -405,3 +467,6 @@ command -v luarocks >/dev/null 2>&1 && echo "  - luarocks: $(luarocks --version 
 command -v op >/dev/null 2>&1 && echo "  - 1password-cli: $(op --version)"
 command -v jq >/dev/null 2>&1 && echo "  - jq: $(jq --version | cut -d'-' -f2)"
 command -v starship >/dev/null 2>&1 && echo "  - starship: $(starship --version | head -n1 | cut -d' ' -f2)"
+command -v tree-sitter >/dev/null 2>&1 && echo "  - tree-sitter: $(tree-sitter --version 2>&1 | head -n1 | awk '{print $2}')"
+command -v bat >/dev/null 2>&1 && echo "  - bat: $(bat --version | cut -d' ' -f2)"
+command -v e1s >/dev/null 2>&1 && echo "  - e1s: $(e1s -v 2>&1 | grep 'Current:' | awk '{print $2}')"
