@@ -93,12 +93,9 @@ else
 fi
 
 # Brave browser
-if ! rpm -q brave-browser >/dev/null 2>&1; then
+if ! check_installed brave-browser; then
     echo "Installing Brave browser..."
-    sudo dnf install -y dnf-plugins-core
-    sudo dnf config-manager --add-repo https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo
-    sudo rpm --import https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
-    sudo dnf install -y brave-browser
+    curl -fsS https://dl.brave.com/install.sh | sh
 else
     echo -e "${GREEN}✓${NC} Brave browser is already installed"
 fi
@@ -139,13 +136,9 @@ else
 fi
 
 # Brave browser
-if ! dpkg -l brave-browser >/dev/null 2>&1; then
+if ! check_installed brave-browser; then
     echo "Installing Brave browser..."
-    sudo apt-get install -y curl
-    sudo curl -fsSLo /usr/share/keyrings/brave-browser-archive-keyring.gpg https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
-    echo "deb [signed-by=/usr/share/keyrings/brave-browser-archive-keyring.gpg] https://brave-browser-apt-release.s3.brave.com/ stable main" | sudo tee /etc/apt/sources.list.d/brave-browser-release.list
-    sudo apt-get update
-    sudo apt-get install -y brave-browser
+    curl -fsS https://dl.brave.com/install.sh | sh
 else
     echo -e "${GREEN}✓${NC} Brave browser is already installed"
 fi
@@ -168,6 +161,14 @@ fi
 # Ghostty terminal
 if ! check_installed ghostty; then
     echo -e "${YELLOW}Please install Ghostty manually from: https://github.com/ghostty-org/ghostty${NC}"
+fi
+
+# Brave browser
+if ! check_installed brave-browser; then
+    echo "Installing Brave browser..."
+    curl -fsS https://dl.brave.com/install.sh | sh
+else
+    echo -e "${GREEN}✓${NC} Brave browser is already installed"
 fi
 
 {{- end }}
