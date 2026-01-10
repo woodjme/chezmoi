@@ -404,4 +404,4 @@ command -v k9s >/dev/null 2>&1 && echo "  - k9s: $(k9s version -s 2>&1 | head -n
 command -v luarocks >/dev/null 2>&1 && echo "  - luarocks: $(luarocks --version | head -n1 | cut -d' ' -f2)"
 command -v op >/dev/null 2>&1 && echo "  - 1password-cli: $(op --version)"
 command -v jq >/dev/null 2>&1 && echo "  - jq: $(jq --version | cut -d'-' -f2)"
-command -v starship >/dev/null 2>&1 && echo "  - starship: $(starship --version | cut -d' ' -f2)"
+command -v starship >/dev/null 2>&1 && echo "  - starship: $(starship --version | head -n1 | cut -d' ' -f2)"
