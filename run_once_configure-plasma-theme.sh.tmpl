@@ -1,0 +1,31 @@
+#!/bin/bash
+
+set -e
+
+{{- if and (eq .chezmoi.os "linux") (eq .chezmoi.osRelease.id "fedora") }}
+
+# Check if plasma-apply-lookandfeel is available (indicates KDE Plasma is installed)
+if ! command -v plasma-apply-lookandfeel >/dev/null 2>&1; then
+    echo "KDE Plasma not detected, skipping theme configuration"
+    exit 0
+fi
+
+# Colors for output
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+echo "Applying Fedora Dark Plasma theme..."
+
+# Apply Fedora dark look and feel
+plasma-apply-lookandfeel -a org.fedoraproject.fedoradark.desktop
+
+echo ""
+echo -e "${GREEN}✓${NC} Plasma theme applied: Fedora Dark"
+echo ""
+echo -e "${YELLOW}Note: Theme changes should apply immediately to new applications.${NC}"
+
+{{- else }}
+echo "Skipping Plasma theme configuration (not Fedora or not Linux)"
+exit 0
+{{- end }}
