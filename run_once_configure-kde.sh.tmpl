@@ -1,0 +1,69 @@
+#!/bin/bash
+
+set -e
+
+{{- if eq .chezmoi.os "linux" }}
+
+# Check if KDE is installed
+if ! command -v kwriteconfig5 >/dev/null 2>&1 && ! command -v kwriteconfig6 >/dev/null 2>&1; then
+    echo "KDE not detected, skipping KDE configuration"
+    exit 0
+fi
+
+# Colors for output
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+echo "Configuring KDE settings..."
+
+# Detect KDE version
+if command -v kwriteconfig6 >/dev/null 2>&1; then
+    KWRITE="kwriteconfig6"
+    KQUIT="kquitapp6"
+    KDED="kded6"
+elif command -v kwriteconfig5 >/dev/null 2>&1; then
+    KWRITE="kwriteconfig5"
+    KQUIT="kquitapp5"
+    KDED="kded5"
+else
+    echo -e "${YELLOW}Could not detect KDE version${NC}"
+    exit 1
+fi
+
+# Configure keyboard layout (UK keyboard, Apple aluminum ISO)
+echo "Setting keyboard layout to GB (Apple Aluminum ISO)..."
+$KWRITE --file kxkbrc --group Layout --key LayoutList gb
+$KWRITE --file kxkbrc --group Layout --key Model applealu_iso
+$KWRITE --file kxkbrc --group Layout --key VariantList ""
+$KWRITE --file kxkbrc --group Layout --key Options ""
+
+# Configure touchpad natural scrolling
+echo "Enabling natural scrolling for touchpad..."
+$KWRITE --file kcminputrc --group Touchpad --key NaturalScroll true
+
+# Reload KDE configuration
+echo "Reloading KDE configuration..."
+if pgrep -x "$KDED" > /dev/null; then
+    $KQUIT $KDED
+    sleep 1
+    $KDED &
+    echo -e "${GREEN}✓${NC} KDE configuration reloaded"
+else
+    echo -e "${YELLOW}Note: $KDED not running. Changes will apply on next login.${NC}"
+fi
+
+echo ""
+echo -e "${GREEN}✓${NC} KDE settings configured"
+echo "Keyboard:"
+echo "  - Layout: GB (UK)"
+echo "  - Model: Apple Aluminum ISO"
+echo "Touchpad:"
+echo "  - Natural scrolling: enabled"
+echo ""
+echo -e "${YELLOW}Note: If changes don't apply immediately, log out and back in.${NC}"
+
+{{- else }}
+echo "Skipping KDE configuration (not Linux)"
+exit 0
+{{- end }}
