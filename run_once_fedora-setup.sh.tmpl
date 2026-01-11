@@ -1,0 +1,163 @@
+#!/bin/bash
+
+set -e
+
+{{- if ne .chezmoi.osRelease.id "fedora" }}
+echo "Skipping Fedora-specific setup (not running Fedora)"
+exit 0
+{{- end }}
+
+echo "Running Fedora-specific system setup..."
+echo ""
+
+# Colors for output
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# ============================================================================
+# RPM Fusion Repositories
+# ============================================================================
+echo -e "${BLUE}Setting up RPM Fusion repositories...${NC}"
+
+# Free repository (most open source stuff)
+if ! dnf repolist | grep -q "rpmfusion-free"; then
+    echo "Installing RPM Fusion Free repository..."
+    sudo dnf install -y \
+        https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm
+else
+    echo -e "${GREEN}✓${NC} RPM Fusion Free repository already installed"
+fi
+
+# Nonfree repository (NVIDIA drivers, some codecs)
+if ! dnf repolist | grep -q "rpmfusion-nonfree"; then
+    echo "Installing RPM Fusion Nonfree repository..."
+    sudo dnf install -y \
+        https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
+else
+    echo -e "${GREEN}✓${NC} RPM Fusion Nonfree repository already installed"
+fi
+
+# Update core system with new repositories
+echo "Updating system with RPM Fusion packages..."
+sudo dnf group upgrade core -y
+sudo dnf check-update || true
+
+echo ""
+
+# ============================================================================
+# Hostname Configuration
+# ============================================================================
+{{- if .fedoraHostname }}
+CURRENT_HOSTNAME=$(hostnamectl hostname)
+DESIRED_HOSTNAME="{{ .fedoraHostname }}"
+
+if [ "$CURRENT_HOSTNAME" != "$DESIRED_HOSTNAME" ]; then
+    echo -e "${BLUE}Setting hostname to: ${DESIRED_HOSTNAME}${NC}"
+    sudo hostnamectl set-hostname "$DESIRED_HOSTNAME"
+    echo -e "${GREEN}✓${NC} Hostname set to: $DESIRED_HOSTNAME"
+else
+    echo -e "${GREEN}✓${NC} Hostname already set to: $DESIRED_HOSTNAME"
+fi
+
+echo ""
+{{- end }}
+
+# ============================================================================
+# Flatpak Configuration
+# ============================================================================
+echo -e "${BLUE}Configuring Flatpak repositories...${NC}"
+
+# Remove Fedora's limited flatpak remote in favor of Flathub
+if flatpak remotes 2>/dev/null | grep -q "^fedora"; then
+    echo "Removing Fedora flatpak remote (using Flathub instead)..."
+    flatpak remote-delete fedora
+    echo -e "${GREEN}✓${NC} Fedora flatpak remote removed"
+else
+    echo -e "${GREEN}✓${NC} Fedora flatpak remote not present"
+fi
+
+echo ""
+
+# ============================================================================
+# Graphics Drivers
+# ============================================================================
+echo -e "${BLUE}Installing graphics drivers (Mesa/Vulkan/VA-API)...${NC}"
+
+# Mesa and Vulkan drivers
+sudo dnf install -y mesa-dri-drivers mesa-vulkan-drivers vulkan-loader mesa-libGLU
+
+# VA-API (Video Acceleration API)
+sudo dnf install -y ffmpeg-libs libva libva-utils
+
+# NVIDIA VA-API driver (if NVIDIA GPU present)
+sudo dnf install -y libva-nvidia-driver
+
+echo -e "${GREEN}✓${NC} Graphics drivers installed"
+echo ""
+
+# ============================================================================
+# Multimedia Codecs
+# ============================================================================
+echo -e "${BLUE}Installing multimedia codecs...${NC}"
+
+# Replace neutered ffmpeg with the real one
+echo "Swapping ffmpeg-free for full ffmpeg..."
+sudo dnf swap -y ffmpeg-free ffmpeg --allowerasing
+
+# Install all the GStreamer plugins
+echo "Installing GStreamer plugins..."
+sudo dnf install -y gstreamer1-plugins-{bad-\*,good-\*,base} \
+    gstreamer1-plugin-openh264 gstreamer1-libav lame\* \
+    --exclude=gstreamer1-plugins-bad-free-devel
+
+# Install multimedia groups
+echo "Installing multimedia groups..."
+sudo dnf group install -y multimedia
+sudo dnf group install -y sound-and-video
+
+echo -e "${GREEN}✓${NC} Multimedia codecs installed"
+echo ""
+
+# ============================================================================
+# Microsoft Fonts
+# ============================================================================
+echo -e "${BLUE}Installing Microsoft core fonts...${NC}"
+
+if ! fc-list | grep -qi "Times New Roman"; then
+    # Install dependencies
+    sudo dnf install -y curl cabextract xorg-x11-font-utils fontconfig
+
+    # Install the fonts
+    sudo rpm -i --nodigest --nosignature \
+        https://downloads.sourceforge.net/project/mscorefonts2/rpms/msttcore-fonts-installer-2.6-1.noarch.rpm
+
+    # Update font cache
+    sudo fc-cache -fv
+
+    echo -e "${GREEN}✓${NC} Microsoft fonts installed"
+else
+    echo -e "${GREEN}✓${NC} Microsoft fonts already installed"
+fi
+
+echo ""
+
+# ============================================================================
+# System Service Configuration
+# ============================================================================
+echo -e "${BLUE}Configuring system services...${NC}"
+
+# Disable NetworkManager-wait-online (speeds up boot)
+if systemctl is-enabled NetworkManager-wait-online.service >/dev/null 2>&1; then
+    echo "Disabling NetworkManager-wait-online service..."
+    sudo systemctl disable NetworkManager-wait-online.service
+    echo -e "${GREEN}✓${NC} NetworkManager-wait-online service disabled"
+else
+    echo -e "${GREEN}✓${NC} NetworkManager-wait-online service already disabled"
+fi
+
+echo ""
+echo -e "${GREEN}Fedora system setup complete!${NC}"
+echo ""
+echo -e "${YELLOW}Note: You may need to reboot for all changes to take effect.${NC}"
