@@ -1,6 +1,6 @@
 {{- $email := promptStringOnce . "email" "Git email address" -}}
 {{- $name := "Jamie Wood" -}}
-{{- $install1Password := promptBoolOnce . "install1Password" "Install 1Password for SSH keys (y/n)" -}}
+{{- $install1Password := promptBoolOnce . "install1Password" "Install 1Password for SSH keys (installs first, will pause for setup) (y/n)" -}}
 {{- $useCommitSigning := promptBoolOnce . "useCommitSigning" "Enable git commit signing (y/n)" -}}
 {{- $use1PasswordSign := false -}}
 {{- $signingkey := "" -}}
