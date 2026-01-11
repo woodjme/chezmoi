@@ -81,28 +81,11 @@ fi
 echo ""
 
 # ============================================================================
-# Graphics Drivers
-# ============================================================================
-echo -e "${BLUE}Installing graphics drivers (Mesa/Vulkan/VA-API)...${NC}"
-
-# Mesa and Vulkan drivers
-sudo dnf install -y mesa-dri-drivers mesa-vulkan-drivers vulkan-loader mesa-libGLU
-
-# VA-API (Video Acceleration API)
-sudo dnf install -y ffmpeg-libs libva libva-utils
-
-# NVIDIA VA-API driver (if NVIDIA GPU present)
-sudo dnf install -y libva-nvidia-driver
-
-echo -e "${GREEN}✓${NC} Graphics drivers installed"
-echo ""
-
-# ============================================================================
-# Multimedia Codecs
+# Multimedia Codecs (must be done BEFORE graphics drivers to avoid conflicts)
 # ============================================================================
 echo -e "${BLUE}Installing multimedia codecs...${NC}"
 
-# Replace neutered ffmpeg with the real one
+# Replace neutered ffmpeg with the real one FIRST to avoid conflicts
 echo "Swapping ffmpeg-free for full ffmpeg..."
 sudo dnf swap -y ffmpeg-free ffmpeg --allowerasing
 
@@ -118,6 +101,42 @@ sudo dnf group install -y multimedia
 sudo dnf group install -y sound-and-video
 
 echo -e "${GREEN}✓${NC} Multimedia codecs installed"
+echo ""
+
+# ============================================================================
+# Graphics Drivers
+# ============================================================================
+echo -e "${BLUE}Installing graphics drivers (Mesa/Vulkan/VA-API)...${NC}"
+
+# Mesa and Vulkan drivers
+sudo dnf install -y mesa-dri-drivers mesa-vulkan-drivers vulkan-loader mesa-libGLU
+
+# VA-API (Video Acceleration API) - ffmpeg-libs now safe to install after swap
+if ! rpm -q ffmpeg-libs >/dev/null 2>&1; then
+    sudo dnf install -y ffmpeg-libs
+fi
+
+if ! rpm -q libva >/dev/null 2>&1; then
+    sudo dnf install -y libva
+fi
+
+if ! rpm -q libva-utils >/dev/null 2>&1; then
+    sudo dnf install -y libva-utils
+fi
+
+# NVIDIA VA-API driver (only if NVIDIA GPU is present)
+if lspci | grep -i nvidia >/dev/null 2>&1; then
+    echo "NVIDIA GPU detected, installing NVIDIA VA-API driver..."
+    if ! rpm -q libva-nvidia-driver >/dev/null 2>&1; then
+        sudo dnf install -y libva-nvidia-driver || echo -e "${YELLOW}Note: libva-nvidia-driver installation failed (may have conflicts)${NC}"
+    else
+        echo -e "${GREEN}✓${NC} libva-nvidia-driver already installed"
+    fi
+else
+    echo "No NVIDIA GPU detected, skipping NVIDIA VA-API driver"
+fi
+
+echo -e "${GREEN}✓${NC} Graphics drivers installed"
 echo ""
 
 # ============================================================================
