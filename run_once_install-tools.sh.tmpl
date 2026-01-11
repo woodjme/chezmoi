@@ -356,8 +356,8 @@ if ! check_installed tree-sitter; then
     sudo apt-get install -y tree-sitter-cli
 fi
 
-# bat (modern cat)
-if ! check_installed bat; then
+# bat (modern cat - installed as batcat on Debian/Ubuntu)
+if ! check_installed bat && ! check_installed batcat; then
     sudo apt-get install -y bat
 fi
 
@@ -468,5 +468,9 @@ command -v op >/dev/null 2>&1 && echo "  - 1password-cli: $(op --version)"
 command -v jq >/dev/null 2>&1 && echo "  - jq: $(jq --version | cut -d'-' -f2)"
 command -v starship >/dev/null 2>&1 && echo "  - starship: $(starship --version | head -n1 | cut -d' ' -f2)"
 command -v tree-sitter >/dev/null 2>&1 && echo "  - tree-sitter: $(tree-sitter --version 2>&1 | head -n1 | awk '{print $2}')"
-command -v bat >/dev/null 2>&1 && echo "  - bat: $(bat --version | cut -d' ' -f2)"
+if command -v bat >/dev/null 2>&1; then
+    echo "  - bat: $(bat --version | cut -d' ' -f2)"
+elif command -v batcat >/dev/null 2>&1; then
+    echo "  - bat: $(batcat --version | cut -d' ' -f2)"
+fi
 command -v e1s >/dev/null 2>&1 && echo "  - e1s: $(e1s -v 2>&1 | grep 'Current:' | awk '{print $2}')"

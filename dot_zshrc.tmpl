@@ -39,6 +39,12 @@ alias tfi='echo terraform init && terraform init'
 {{- if eq .chezmoi.os "darwin" }}
 # macOS-specific aliases
 alias tailscale="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
+{{- else if eq .chezmoi.os "linux" }}
+{{- if or (eq .chezmoi.osRelease.id "debian") (eq .chezmoi.osRelease.id "ubuntu") }}
+# Debian/Ubuntu-specific aliases
+# bat is installed as batcat on Debian/Ubuntu due to naming conflict
+command -v batcat >/dev/null 2>&1 && alias bat='batcat'
+{{- end }}
 {{- end }}
 
 # fzf integration
