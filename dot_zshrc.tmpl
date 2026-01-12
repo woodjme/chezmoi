@@ -62,3 +62,7 @@ eval "$(starship init zsh)"
 
 # Disable oh-my-zsh RPROMPT interference
 unset RPROMPT
+
+# Source client-specific local config (not managed by chezmoi)
+# Create ~/.zshrc.local for machine-specific aliases, config, secrets, etc.
+[ -f ~/.zshrc.local ] && source ~/.zshrc.local
