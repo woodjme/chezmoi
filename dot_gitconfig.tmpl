@@ -11,9 +11,9 @@
 {{- if .useCommitSigning }}
 [commit]
     gpgsign = true
+{{- if .use1PasswordSign }}
 [gpg]
     format = ssh
-{{- if .use1PasswordSign }}
 {{- if eq .chezmoi.os "darwin" }}
 [gpg "ssh"]
     program = /Applications/1Password.app/Contents/MacOS/op-ssh-sign
