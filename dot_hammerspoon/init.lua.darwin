@@ -1,0 +1,259 @@
+-------------------------------------------------
+-- ~/.hammerspoon/init.lua
+-------------------------------------------------
+
+
+-------------------------------------------------
+-- ALT + 1/2/4 — Normal App Maximize Bindings
+-------------------------------------------------
+
+local appBindings = {
+    ["1"] = "Brave Browser",
+    ["2"] = "Ghostty",
+}
+
+local function launchAndMaximize(appName)
+    hs.application.launchOrFocus(appName)
+    hs.timer.doAfter(0.25, function()
+        getWindowForce(appName, function(win)
+            if win then win:maximize() end
+        end)
+    end)
+end
+
+for key, appName in pairs(appBindings) do
+    hs.hotkey.bind({"alt"}, key, function()
+        launchAndMaximize(appName)
+    end)
+end
+
+
+
+
+-------------------------------------------------
+-- ALT + Q — Instant Todoist Side Panel Toggle
+-------------------------------------------------
+
+ hs.window.animationDuration = 0  -- ensure all snaps are instant
+
+local todoistAppName = "Todoist"
+local lastLeftWindow = nil
+
+function snap(win, frame)
+    if win then win:setFrame(frame, 0) end
+end
+
+hs.hotkey.bind({"alt"}, "q", function()
+    local todoApp = hs.application.get(todoistAppName)
+
+    -- Determine if Todoist has a visible window
+    local todoWin = todoApp and todoApp:mainWindow()
+    local isVisible = todoWin and todoWin:isVisible()
+
+    -------------------------------------------------
+    -- TOGGLE OFF (Todoist visible → hide & restore)
+    -------------------------------------------------
+    if isVisible then
+        todoApp:hide()
+
+        -- Restore previously snapped window
+        if lastLeftWindow and lastLeftWindow:isVisible() then
+            lastLeftWindow:maximize(0)
+        end
+
+        lastLeftWindow = nil
+        return
+    end
+
+    -------------------------------------------------
+    -- TOGGLE ON
+    -------------------------------------------------
+    local frontWin = hs.window.focusedWindow()
+    lastLeftWindow = frontWin
+
+    hs.application.launchOrFocus(todoistAppName)
+
+    -- fetch after bring-to-front but without artificial delay
+    hs.timer.doAfter(0.05, function()
+        local app = hs.application.get(todoistAppName)
+        local win = app and app:mainWindow()
+        if not win then return end
+
+        win:unminimize()
+
+        local screen = win:screen()
+        local f = screen:frame()
+
+        -- right 1/3 panel
+        local rightWidth = f.w / 3
+        snap(win, {
+            x = f.x + (f.w - rightWidth),
+            y = f.y,
+            w = rightWidth,
+            h = f.h
+        })
+
+        -- left window
+        if frontWin and frontWin ~= win then
+            snap(frontWin, {
+                x = f.x,
+                y = f.y,
+                w = f.w * 2/3,
+                h = f.h
+            })
+        end
+    end)
+end)
+
+
+-------------------------------------------------
+-- HELPERS
+
+-------------------------------------------------
+-- UNIVERSAL MULTI-APP TOGGLER
+-- Usage:
+--   bindToggle({"alt"}, "3", {"Slack", "Discord", "WhatsApp", "Mail"})
+-------------------------------------------------
+
+local function getBundleID(appName)
+    local app = hs.application.find(appName)
+    return app and app:bundleID()
+end
+
+local function normaliseAppList(appList)
+    local out = {}
+    for _, name in ipairs(appList) do
+        table.insert(out, {
+            name = name,
+            bundle = getBundleID(name)
+        })
+    end
+    return out
+end
+
+local function findIndexForFrontApp(appList, front)
+    if not front then return nil end
+    local frontBundle = front:bundleID()
+    local frontName   = front:name()
+
+    for i, app in ipairs(appList) do
+        if (app.bundle and app.bundle == frontBundle)
+            or app.name == frontName
+        then
+            return i
+        end
+    end
+
+    return nil
+end
+
+-- Creates a toggle hotkey
+function bindToggle(mods, key, appNames)
+    local apps = normaliseAppList(appNames)
+    local lastIndex = 1
+
+    -- Helper to move to an app by index
+    local function switchTo(i)
+        if i > #apps then i = 1 end
+        if i < 1 then i = #apps end
+        lastIndex = i
+        launchAndMaximize(apps[i].name)
+    end
+
+    hs.hotkey.bind(mods, key, function()
+        local front = hs.application.frontmostApplication()
+        local idx = findIndexForFrontApp(apps, front)
+
+        -------------------------------------------------
+        -- Case 1: One of the apps is frontmost → cycle next
+        -------------------------------------------------
+        if idx then
+            switchTo(idx + 1)
+            return
+        end
+
+        -------------------------------------------------
+        -- Case 2: Frontmost is outside the group
+        -- → return to last-used toggle app
+        -------------------------------------------------
+        switchTo(lastIndex)
+    end)
+end
+
+
+-------------------------------------------------
+-- isRunning(appName)
+-- Fast: checks ONLY the running process table.
+-- Avoids slow macOS LS / Spotlight / AX lookups.
+-------------------------------------------------
+function isRunning(appName)
+    for _, app in ipairs(hs.application.runningApplications()) do
+        if app:name() == appName then
+            return true
+        end
+    end
+    return false
+end
+
+
+-------------------------------------------------
+-- getWindowForce(appName, callback)
+-- Ensures we get a visible window:
+--  • activates app
+--  • finds focused/visible window
+--  • waits until one exists
+-------------------------------------------------
+function getWindowForce(appName, callback)
+    local app = hs.application.find(appName)
+
+    -- App not running
+    if not app then
+        callback(nil)
+        return
+    end
+
+    -- Bring to front (important)
+    app:activate(true)
+
+    -- Try immediate
+    local function try()
+        local win = app:focusedWindow()
+        if win and win:isVisible() then return win end
+
+        local wins = app:visibleWindows()
+        if #wins > 0 then return wins[1] end
+
+        return nil
+    end
+
+    local w = try()
+    if w then callback(w) return end
+
+    -- Retry until visible
+    hs.timer.doUntil(
+        function() return try() ~= nil end,
+        function() callback(try()) end,
+        0.05
+    )
+end
+
+
+-------------------------------------------------
+-- splitWindows(winA, winB)
+-- Simple 50/50 left-right split on same monitor.
+-------------------------------------------------
+function splitWindows(winA, winB)
+    local screen = winA:screen()
+    local f = screen:frame()
+
+    winA:setFrame({x=f.x, y=f.y,       w=f.w/2, h=f.h})
+    winB:setFrame({x=f.x + f.w/2, y=f.y, w=f.w/2, h=f.h})
+end
+
+
+bindToggle({"alt"}, "3", {
+    "Slack",
+    "Discord",
+    "WhatsApp",
+    "Mail"
+})
