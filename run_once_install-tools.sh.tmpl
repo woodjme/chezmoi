@@ -96,6 +96,11 @@ if ! check_installed e1s; then
     brew install keidarcy/tap/e1s
 fi
 
+# opencode
+if ! check_installed opencode; then
+    OPENCODE_INSTALL_DIR="$HOME/.local/bin" curl -fsSL https://opencode.ai/install | bash
+fi
+
 {{- else if eq .chezmoi.os "linux" }}
 {{- if eq .chezmoi.osRelease.id "fedora" }}
 # Fedora installations
@@ -230,6 +235,11 @@ if ! check_installed e1s; then
     tar -xzf /tmp/e1s.tar.gz -C /tmp
     sudo mv /tmp/e1s /usr/local/bin/
     rm /tmp/e1s.tar.gz
+fi
+
+# opencode
+if ! check_installed opencode; then
+    OPENCODE_INSTALL_DIR="$HOME/.local/bin" curl -fsSL https://opencode.ai/install | bash
 fi
 
 {{- else if or (eq .chezmoi.osRelease.id "debian") (eq .chezmoi.osRelease.id "ubuntu") }}
@@ -376,6 +386,11 @@ if ! check_installed e1s; then
     rm /tmp/e1s.tar.gz
 fi
 
+# opencode
+if ! check_installed opencode; then
+    OPENCODE_INSTALL_DIR="$HOME/.local/bin" curl -fsSL https://opencode.ai/install | bash
+fi
+
 {{- else }}
 # Generic Linux
 echo -e "${YELLOW}Generic Linux detected. Attempting installation...${NC}"
@@ -474,3 +489,4 @@ elif command -v batcat >/dev/null 2>&1; then
     echo "  - bat: $(batcat --version | cut -d' ' -f2)"
 fi
 command -v e1s >/dev/null 2>&1 && echo "  - e1s: $(e1s -v 2>&1 | grep 'Current:' | awk '{print $2}')"
+command -v opencode >/dev/null 2>&1 && echo "  - opencode: $(opencode --version 2>&1)"
