@@ -1,6 +1,10 @@
 # Environment variables
 export EDITOR=nvim
 export PATH=$HOME/.local/bin:$HOME/bin:/usr/local/bin:$PATH
+
+# OpenCode
+export PATH=$HOME/.opencode/bin:$PATH
+
 export ZSH="$HOME/.oh-my-zsh"
 
 {{- if eq .chezmoi.os "darwin" }}

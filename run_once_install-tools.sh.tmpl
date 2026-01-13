@@ -84,9 +84,6 @@ check_installed jq || brew install jq
 # starship (shell prompt)
 check_installed starship || brew install starship
 
-# tree-sitter
-check_installed tree-sitter || brew install tree-sitter
-
 # bat (modern cat)
 check_installed bat || brew install bat
 
@@ -98,12 +95,17 @@ fi
 
 # opencode
 if ! check_installed opencode; then
-    OPENCODE_INSTALL_DIR="$HOME/.local/bin" curl -fsSL https://opencode.ai/install | bash
+    curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path
 fi
 
 {{- else if eq .chezmoi.os "linux" }}
 {{- if eq .chezmoi.osRelease.id "fedora" }}
 # Fedora installations
+
+# Essential build tools (needed for other installations)
+if ! check_installed zip; then
+    sudo dnf install -y zip unzip curl make gcc gcc-c++
+fi
 
 # Podman (Docker-compatible container runtime - Fedora's native solution)
 if ! check_installed podman; then
@@ -170,16 +172,6 @@ if ! check_installed btop; then
     sudo dnf install -y btop
 fi
 
-# curl
-if ! check_installed curl; then
-    sudo dnf install -y curl
-fi
-
-# zip/unzip
-if ! check_installed zip; then
-    sudo dnf install -y zip unzip
-fi
-
 # fd
 if ! check_installed fd; then
     sudo dnf install -y fd-find
@@ -212,11 +204,6 @@ if ! check_installed starship; then
     curl -sS https://starship.rs/install.sh | sh -s -- -y
 fi
 
-# tree-sitter
-if ! check_installed tree-sitter; then
-    sudo dnf install -y tree-sitter-cli
-fi
-
 # bat (modern cat)
 if ! check_installed bat; then
     sudo dnf install -y bat
@@ -239,15 +226,25 @@ fi
 
 # opencode
 if ! check_installed opencode; then
-    OPENCODE_INSTALL_DIR="$HOME/.local/bin" curl -fsSL https://opencode.ai/install | bash
+    curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path
 fi
 
 {{- else if or (eq .chezmoi.osRelease.id "debian") (eq .chezmoi.osRelease.id "ubuntu") }}
 # Debian/Ubuntu installations
 
+# Essential build tools (needed for other installations)
+if ! check_installed zip; then
+    sudo apt-get update
+    sudo apt-get install -y zip unzip make build-essential
+fi
+
+# curl
+if ! check_installed curl; then
+    sudo apt-get install -y curl
+fi
+
 # fzf
 if ! check_installed fzf; then
-    sudo apt-get update
     sudo apt-get install -y fzf
 fi
 
@@ -313,16 +310,6 @@ if ! check_installed btop; then
     sudo apt-get install -y btop
 fi
 
-# curl
-if ! check_installed curl; then
-    sudo apt-get install -y curl
-fi
-
-# zip/unzip
-if ! check_installed zip; then
-    sudo apt-get install -y zip unzip
-fi
-
 # fd (note: command is 'fdfind' on Debian/Ubuntu)
 if ! check_installed fdfind && ! check_installed fd; then
     sudo apt-get install -y fd-find
@@ -361,11 +348,6 @@ if ! check_installed starship; then
     curl -sS https://starship.rs/install.sh | sh -s -- -y
 fi
 
-# tree-sitter
-if ! check_installed tree-sitter; then
-    sudo apt-get install -y tree-sitter-cli
-fi
-
 # bat (modern cat - installed as batcat on Debian/Ubuntu)
 if ! check_installed bat && ! check_installed batcat; then
     sudo apt-get install -y bat
@@ -388,7 +370,7 @@ fi
 
 # opencode
 if ! check_installed opencode; then
-    OPENCODE_INSTALL_DIR="$HOME/.local/bin" curl -fsSL https://opencode.ai/install | bash
+    curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path
 fi
 
 {{- else }}
@@ -455,6 +437,35 @@ fi
 
 {{- end }}
 
+# tree-sitter (all platforms - installed from GitHub releases)
+if ! check_installed tree-sitter; then
+    echo "Installing tree-sitter from GitHub releases..."
+    TREE_SITTER_VERSION=$(curl -s "https://api.github.com/repos/tree-sitter/tree-sitter/releases/latest" | grep -Po '"tag_name": "\K[^"]*')
+    ARCH=$(uname -m)
+    {{- if eq .chezmoi.os "darwin" }}
+    if [ "$ARCH" = "x86_64" ]; then
+        TREE_SITTER_BINARY="tree-sitter-macos-x64.gz"
+    elif [ "$ARCH" = "arm64" ]; then
+        TREE_SITTER_BINARY="tree-sitter-macos-arm64.gz"
+    fi
+    {{- else }}
+    if [ "$ARCH" = "x86_64" ]; then
+        TREE_SITTER_BINARY="tree-sitter-linux-x64.gz"
+    elif [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
+        TREE_SITTER_BINARY="tree-sitter-linux-arm64.gz"
+    fi
+    {{- end }}
+    curl -sL "https://github.com/tree-sitter/tree-sitter/releases/download/${TREE_SITTER_VERSION}/${TREE_SITTER_BINARY}" -o /tmp/tree-sitter.gz
+    gunzip /tmp/tree-sitter.gz
+    chmod +x /tmp/tree-sitter
+    {{- if eq .chezmoi.os "darwin" }}
+    mv /tmp/tree-sitter /usr/local/bin/
+    {{- else }}
+    sudo mv /tmp/tree-sitter /usr/local/bin/
+    {{- end }}
+    echo -e "${GREEN}✓${NC} tree-sitter installed from GitHub releases"
+fi
+
 echo ""
 echo -e "${GREEN}All tools installed successfully!${NC}"
 echo ""
@@ -489,4 +500,4 @@ elif command -v batcat >/dev/null 2>&1; then
     echo "  - bat: $(batcat --version | cut -d' ' -f2)"
 fi
 command -v e1s >/dev/null 2>&1 && echo "  - e1s: $(e1s -v 2>&1 | grep 'Current:' | awk '{print $2}')"
-command -v opencode >/dev/null 2>&1 && echo "  - opencode: $(opencode --version 2>&1)"
+[ -x "$HOME/.opencode/bin/opencode" ] && echo "  - opencode: $($HOME/.opencode/bin/opencode --version 2>&1)"
