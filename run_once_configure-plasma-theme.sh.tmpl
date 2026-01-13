@@ -2,7 +2,7 @@
 
 set -e
 
-{{- if and (eq .chezmoi.os "linux") (eq .chezmoi.osRelease.id "fedora") }}
+{{- if and (eq .chezmoi.os "linux") (hasKey .chezmoi "osRelease") (eq .chezmoi.osRelease.id "fedora") }}
 
 # Check if plasma-apply-lookandfeel is available (indicates KDE Plasma is installed)
 if ! command -v plasma-apply-lookandfeel >/dev/null 2>&1; then

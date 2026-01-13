@@ -2,7 +2,7 @@
 
 set -e
 
-{{- if ne .chezmoi.osRelease.id "fedora" }}
+{{- if or (ne .chezmoi.os "linux") (not (hasKey .chezmoi "osRelease")) (ne .chezmoi.osRelease.id "fedora") }}
 echo "Skipping Fedora-specific setup (not running Fedora)"
 exit 0
 {{- end }}

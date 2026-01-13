@@ -14,7 +14,7 @@
 {{- $installDesktopApps := promptBoolOnce . "installDesktopApps" "Install desktop apps (browsers, etc) (y/n)" -}}
 {{- $useNvimSSH := promptBoolOnce . "useNvimSSH" "Clone nvim config via SSH (needs SSH keys configured) (y/n)" -}}
 {{- $fedoraHostname := "" -}}
-{{- if eq .chezmoi.osRelease.id "fedora" -}}
+{{- if and (eq .chezmoi.os "linux") (hasKey .chezmoi "osRelease") (eq .chezmoi.osRelease.id "fedora") -}}
 {{- $fedoraHostname = promptStringOnce . "fedoraHostname" "Hostname for this Fedora system (e.g., hungry-beast)" -}}
 {{- end -}}
 
