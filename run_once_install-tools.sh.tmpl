@@ -9,6 +9,12 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+# Ask about AI tools
+echo ""
+read -p "Install AI tools (opencode)? (y/n): " -n 1 -r
+echo ""
+INSTALL_AI_TOOLS=$REPLY
+
 check_installed() {
     if command -v "$1" >/dev/null 2>&1; then
         echo -e "${GREEN}✓${NC} $1 is already installed"
@@ -94,7 +100,7 @@ if ! check_installed e1s; then
 fi
 
 # opencode
-if ! check_installed opencode; then
+if [[ $INSTALL_AI_TOOLS =~ ^[Yy]$ ]] && ! check_installed opencode; then
     curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path
 fi
 
@@ -225,7 +231,7 @@ if ! check_installed e1s; then
 fi
 
 # opencode
-if ! check_installed opencode; then
+if [[ $INSTALL_AI_TOOLS =~ ^[Yy]$ ]] && ! check_installed opencode; then
     curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path
 fi
 
@@ -369,7 +375,7 @@ if ! check_installed e1s; then
 fi
 
 # opencode
-if ! check_installed opencode; then
+if [[ $INSTALL_AI_TOOLS =~ ^[Yy]$ ]] && ! check_installed opencode; then
     curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path
 fi
 
