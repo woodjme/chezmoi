@@ -1,6 +1,10 @@
 {{- $email := promptStringOnce . "email" "Git email address" -}}
 {{- $name := "Jamie Wood" -}}
 {{- $install1Password := promptBoolOnce . "install1Password" "Install 1Password for SSH keys (installs first, will pause for setup) (y/n)" -}}
+{{- $use1PasswordAWS := false -}}
+{{- if $install1Password -}}
+{{- $use1PasswordAWS = promptBoolOnce . "use1PasswordAWS" "Template AWS config/credentials from 1Password documents (requires 1Password CLI and documents named 'aws-config' and 'aws-credentials') (y/n)" -}}
+{{- end -}}
 {{- $useCommitSigning := promptBoolOnce . "useCommitSigning" "Enable git commit signing (y/n)" -}}
 {{- $use1PasswordSign := false -}}
 {{- $signingkey := "" -}}
@@ -22,6 +26,7 @@
     email = {{ $email | quote }}
     name = {{ $name | quote }}
     install1Password = {{ $install1Password }}
+    use1PasswordAWS = {{ $use1PasswordAWS }}
     useCommitSigning = {{ $useCommitSigning }}
     signingkey = {{ $signingkey | quote }}
     use1PasswordSign = {{ $use1PasswordSign }}
