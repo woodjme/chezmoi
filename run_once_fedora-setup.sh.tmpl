@@ -124,16 +124,39 @@ if ! rpm -q libva-utils >/dev/null 2>&1; then
     sudo dnf install -y libva-utils
 fi
 
-# NVIDIA VA-API driver (only if NVIDIA GPU is present)
+# NVIDIA drivers (only if NVIDIA GPU is present)
 if lspci | grep -i nvidia >/dev/null 2>&1; then
-    echo "NVIDIA GPU detected, installing NVIDIA VA-API driver..."
+    echo "NVIDIA GPU detected, installing NVIDIA drivers..."
+
+    # Install kernel headers and dev tools
+    echo "Installing kernel headers and development tools..."
+    sudo dnf install -y kernel-devel kernel-headers gcc make dkms acpid \
+        libglvnd-glx libglvnd-opengl libglvnd-devel pkgconfig
+
+    # Set open kernel module macro for RTX 4000+ series
+    if [ ! -f /etc/rpm/macros.nvidia-kmod ]; then
+        echo "Setting open kernel module macro for RTX 4000+ GPUs..."
+        sudo sh -c 'echo "%_with_kmod_nvidia_open 1" > /etc/rpm/macros.nvidia-kmod'
+    fi
+
+    # Install NVIDIA drivers
+    if ! rpm -q akmod-nvidia >/dev/null 2>&1; then
+        echo "Installing NVIDIA drivers (akmod-nvidia, xorg-x11-drv-nvidia-cuda)..."
+        sudo dnf install -y akmod-nvidia xorg-x11-drv-nvidia-cuda
+        echo -e "${GREEN}✓${NC} NVIDIA drivers installed"
+        echo -e "${YELLOW}Note: Reboot required for NVIDIA drivers to load${NC}"
+    else
+        echo -e "${GREEN}✓${NC} NVIDIA drivers already installed"
+    fi
+
+    # Install NVIDIA VA-API driver
     if ! rpm -q libva-nvidia-driver >/dev/null 2>&1; then
         sudo dnf install -y libva-nvidia-driver || echo -e "${YELLOW}Note: libva-nvidia-driver installation failed (may have conflicts)${NC}"
     else
         echo -e "${GREEN}✓${NC} libva-nvidia-driver already installed"
     fi
 else
-    echo "No NVIDIA GPU detected, skipping NVIDIA VA-API driver"
+    echo "No NVIDIA GPU detected, skipping NVIDIA drivers"
 fi
 
 echo -e "${GREEN}✓${NC} Graphics drivers installed"
