@@ -93,6 +93,9 @@ check_installed starship || brew install starship
 # bat (modern cat)
 check_installed bat || brew install bat
 
+# tree-sitter
+check_installed tree-sitter || brew install tree-sitter
+
 # e1s (AWS ECS CLI)
 if ! check_installed e1s; then
     brew tap keidarcy/tap
@@ -443,34 +446,24 @@ fi
 
 {{- end }}
 
-# tree-sitter (all platforms - installed from GitHub releases)
+{{- if eq .chezmoi.os "linux" }}
+# tree-sitter (Linux - installed from GitHub releases)
 if ! check_installed tree-sitter; then
     echo "Installing tree-sitter from GitHub releases..."
     TREE_SITTER_VERSION=$(curl -s "https://api.github.com/repos/tree-sitter/tree-sitter/releases/latest" | grep -Po '"tag_name": "\K[^"]*')
     ARCH=$(uname -m)
-    {{- if eq .chezmoi.os "darwin" }}
-    if [ "$ARCH" = "x86_64" ]; then
-        TREE_SITTER_BINARY="tree-sitter-macos-x64.gz"
-    elif [ "$ARCH" = "arm64" ]; then
-        TREE_SITTER_BINARY="tree-sitter-macos-arm64.gz"
-    fi
-    {{- else }}
     if [ "$ARCH" = "x86_64" ]; then
         TREE_SITTER_BINARY="tree-sitter-linux-x64.gz"
     elif [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
         TREE_SITTER_BINARY="tree-sitter-linux-arm64.gz"
     fi
-    {{- end }}
     curl -sL "https://github.com/tree-sitter/tree-sitter/releases/download/${TREE_SITTER_VERSION}/${TREE_SITTER_BINARY}" -o /tmp/tree-sitter.gz
     gunzip /tmp/tree-sitter.gz
     chmod +x /tmp/tree-sitter
-    {{- if eq .chezmoi.os "darwin" }}
-    mv /tmp/tree-sitter /usr/local/bin/
-    {{- else }}
     sudo mv /tmp/tree-sitter /usr/local/bin/
-    {{- end }}
     echo -e "${GREEN}✓${NC} tree-sitter installed from GitHub releases"
 fi
+{{- end }}
 
 echo ""
 echo -e "${GREEN}All tools installed successfully!${NC}"
