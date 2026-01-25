@@ -107,6 +107,14 @@ if [[ $INSTALL_AI_TOOLS =~ ^[Yy]$ ]] && ! check_installed opencode; then
     curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path
 fi
 
+# AWS Session Manager Plugin
+if ! check_installed session-manager-plugin; then
+    curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/mac_arm64/session-manager-plugin.pkg" -o "/tmp/session-manager-plugin.pkg"
+    sudo installer -pkg /tmp/session-manager-plugin.pkg -target /
+    sudo ln -s /usr/local/sessionmanagerplugin/bin/session-manager-plugin /usr/local/bin/session-manager-plugin
+    rm /tmp/session-manager-plugin.pkg
+fi
+
 {{- else if eq .chezmoi.os "linux" }}
 {{- if eq .chezmoi.osRelease.id "fedora" }}
 # Fedora installations
@@ -236,6 +244,11 @@ fi
 # opencode
 if [[ $INSTALL_AI_TOOLS =~ ^[Yy]$ ]] && ! check_installed opencode; then
     curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path
+fi
+
+# AWS Session Manager Plugin
+if ! check_installed session-manager-plugin; then
+    sudo dnf install -y https://s3.amazonaws.com/session-manager-downloads/plugin/latest/linux_64bit/session-manager-plugin.rpm
 fi
 
 {{- else if or (eq .chezmoi.osRelease.id "debian") (eq .chezmoi.osRelease.id "ubuntu") }}
@@ -382,6 +395,13 @@ if [[ $INSTALL_AI_TOOLS =~ ^[Yy]$ ]] && ! check_installed opencode; then
     curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path
 fi
 
+# AWS Session Manager Plugin
+if ! check_installed session-manager-plugin; then
+    curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "/tmp/session-manager-plugin.deb"
+    sudo dpkg -i /tmp/session-manager-plugin.deb
+    rm /tmp/session-manager-plugin.deb
+fi
+
 {{- else }}
 # Generic Linux
 echo -e "${YELLOW}Generic Linux detected. Attempting installation...${NC}"
@@ -430,6 +450,17 @@ if ! check_installed kubectl; then
     curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
     sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
     rm kubectl
+fi
+
+# AWS Session Manager Plugin
+if ! check_installed session-manager-plugin; then
+    if command -v dnf >/dev/null 2>&1; then
+        sudo dnf install -y https://s3.amazonaws.com/session-manager-downloads/plugin/latest/linux_64bit/session-manager-plugin.rpm
+    elif command -v apt-get >/dev/null 2>&1; then
+        curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "/tmp/session-manager-plugin.deb"
+        sudo dpkg -i /tmp/session-manager-plugin.deb
+        rm /tmp/session-manager-plugin.deb
+    fi
 fi
 {{- end }}
 
@@ -499,4 +530,5 @@ elif command -v batcat >/dev/null 2>&1; then
     echo "  - bat: $(batcat --version | cut -d' ' -f2)"
 fi
 command -v e1s >/dev/null 2>&1 && echo "  - e1s: $(e1s -v 2>&1 | grep 'Current:' | awk '{print $2}')"
+command -v session-manager-plugin >/dev/null 2>&1 && echo "  - session-manager-plugin: $(session-manager-plugin --version 2>&1)"
 [ -x "$HOME/.opencode/bin/opencode" ] && echo "  - opencode: $($HOME/.opencode/bin/opencode --version 2>&1)"
