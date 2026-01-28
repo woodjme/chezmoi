@@ -133,12 +133,6 @@ if lspci | grep -i nvidia >/dev/null 2>&1; then
     sudo dnf install -y kernel-devel kernel-headers gcc make dkms acpid \
         libglvnd-glx libglvnd-opengl libglvnd-devel pkgconfig
 
-    # Set open kernel module macro for RTX 4000+ series
-    if [ ! -f /etc/rpm/macros.nvidia-kmod ]; then
-        echo "Setting open kernel module macro for RTX 4000+ GPUs..."
-        sudo sh -c 'echo "%_with_kmod_nvidia_open 1" > /etc/rpm/macros.nvidia-kmod'
-    fi
-
     # Install NVIDIA drivers
     if ! rpm -q akmod-nvidia >/dev/null 2>&1; then
         echo "Installing NVIDIA drivers (akmod-nvidia, xorg-x11-drv-nvidia-cuda)..."
