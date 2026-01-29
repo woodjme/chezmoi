@@ -1,4 +1,6 @@
 .DS_Store
 **/CLAUDE.local.md
 CLAUDE.md
+tfplan
+*.tfplan
 
