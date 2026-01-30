@@ -1,7 +1,8 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "plugin": [
-    "opencode-anthropic-auth@latest"
+    "opencode-anthropic-auth@latest",
+    "envsitter-guard@latest"
   ],
   "mcp": {
     "chrome-devtools": {
