@@ -124,18 +124,15 @@ if ! check_installed zip; then
     sudo dnf install -y zip unzip curl make gcc gcc-c++
 fi
 
-# Podman (Docker-compatible container runtime - Fedora's native solution)
-if ! check_installed podman; then
-    echo "Installing Podman..."
-    sudo dnf install -y podman
-fi
-
-# Podman Docker compatibility layer
+# Docker Desktop (runs in VM - avoids firewalld/SELinux issues)
 if ! check_installed docker; then
-    echo "Installing Docker CLI compatibility for Podman..."
-    sudo dnf install -y podman-docker podman-compose
-    # podman-docker provides 'docker' command that uses podman underneath
-    echo -e "${GREEN}✓${NC} Docker CLI compatibility installed"
+    echo "Installing Docker Desktop..."
+    sudo dnf config-manager addrepo --from-repofile https://download.docker.com/linux/fedora/docker-ce.repo
+    curl -L -o /tmp/docker-desktop-x86_64.rpm "https://desktop.docker.com/linux/main/amd64/docker-desktop-x86_64.rpm"
+    sudo dnf install -y /tmp/docker-desktop-x86_64.rpm
+    rm /tmp/docker-desktop-x86_64.rpm
+    systemctl --user enable docker-desktop
+    echo -e "${GREEN}✓${NC} Docker Desktop installed"
 fi
 
 # fzf
@@ -176,8 +173,8 @@ if ! check_installed n; then
     fi
 fi
 
-# Note: On Fedora, we use Podman (installed at the top) instead of Docker
-# Podman provides docker CLI compatibility via the podman-docker package
+# Note: On Fedora, we use Docker Desktop which runs in a VM
+# This avoids firewalld/SELinux permission issues that plague Docker Engine
 
 # htop
 if ! check_installed htop; then
@@ -500,12 +497,11 @@ echo ""
 echo -e "${GREEN}All tools installed successfully!${NC}"
 echo ""
 echo "Installed tools:"
-command -v podman >/dev/null 2>&1 && echo "  - podman: $(podman --version | cut -d' ' -f3)"
 command -v docker >/dev/null 2>&1 && echo "  - docker: $(docker --version | cut -d' ' -f3 | tr -d ',')"
 command -v n >/dev/null 2>&1 && echo "  - n: $(n --version)"
 command -v fzf >/dev/null 2>&1 && echo "  - fzf: $(fzf --version)"
-command -v rg >/dev/null 2>&1 && echo "  - ripgrep: $(rg --version | head -n1)"
-command -v nvim >/dev/null 2>&1 && echo "  - neovim: $(nvim --version | head -n1)"
+command -v rg >/dev/null 2>&1 && echo "  - ripgrep: $(rg --version 2>&1 | head -n1 | tr -d '\n')"
+command -v nvim >/dev/null 2>&1 && printf "  - neovim: %s\n" "$(nvim --version 2>&1 | head -n1)"
 command -v aws >/dev/null 2>&1 && echo "  - aws-cli: $(aws --version 2>&1 | cut -d' ' -f1)"
 command -v kubectl >/dev/null 2>&1 && echo "  - kubectl: $(kubectl version --client 2>/dev/null | grep 'Client Version' | sed 's/.*: //' | cut -d' ' -f1)"
 [ -f "$HOME/.tfenv/bin/tfenv" ] && echo "  - tfenv: $($HOME/.tfenv/bin/tfenv --version)"
