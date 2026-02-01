@@ -9,6 +9,8 @@
     excludesfile = ~/.gitignore
 [pull]
     rebase = false
+[push]
+    autoSetupRemote = true
 {{- if .useCommitSigning }}
 [commit]
     gpgsign = true
