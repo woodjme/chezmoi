@@ -1,0 +1,135 @@
+#!/bin/bash
+
+set -e
+
+{{- if or (ne .chezmoi.os "linux") (not (hasKey .chezmoi "osRelease")) (ne .chezmoi.osRelease.id "fedora") }}
+echo "Skipping KDE settings (not Fedora)"
+exit 0
+{{- end }}
+
+if ! command -v kwriteconfig6 >/dev/null 2>&1; then
+    echo "KDE Plasma not detected (kwriteconfig6 not found), skipping KDE settings"
+    exit 0
+fi
+
+# Colors for output
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+echo "Applying KDE Plasma settings..."
+echo ""
+
+# ============================================================================
+# kdeglobals - Global KDE settings
+# ============================================================================
+echo -e "${BLUE}Configuring global KDE settings...${NC}"
+
+# Disable animations
+kwriteconfig6 --file kdeglobals --group KDE --key AnimationDurationFactor --type int 0
+
+# Set default browser application
+kwriteconfig6 --file kdeglobals --group General --key BrowserApplication "brave-browser.desktop"
+
+# Display scaling
+kwriteconfig6 --file kdeglobals --group KScreen --key ScaleFactor --type double 1.5
+
+echo -e "${GREEN}✓${NC} Global KDE settings applied"
+
+# ============================================================================
+# kwinrc - Window manager settings
+# ============================================================================
+echo -e "${BLUE}Configuring KWin settings...${NC}"
+
+# Night Color (blue light filter)
+kwriteconfig6 --file kwinrc --group NightColor --key Active --type bool true
+kwriteconfig6 --file kwinrc --group NightColor --key NightTemperature --type int 3400
+
+# Tiling
+kwriteconfig6 --file kwinrc --group Tiling --key padding --type int 4
+
+# Hot corner - top left triggers Overview
+kwriteconfig6 --file kwinrc --group "Effect-overview" --key BorderActivate --type int 9
+
+# Xwayland scaling
+kwriteconfig6 --file kwinrc --group Xwayland --key Scale --type double 1.5
+
+# Virtual desktops
+kwriteconfig6 --file kwinrc --group Desktops --key Number --type int 1
+kwriteconfig6 --file kwinrc --group Desktops --key Rows --type int 1
+
+echo -e "${GREEN}✓${NC} KWin settings applied"
+
+# ============================================================================
+# kcmfonts - Font rendering
+# ============================================================================
+echo -e "${BLUE}Configuring font rendering...${NC}"
+
+# Force DPI to match 1.5x scaling (96 * 1.5 = 144)
+kwriteconfig6 --file kcmfonts --group General --key forceFontDPI --type int 144
+
+echo -e "${GREEN}✓${NC} Font rendering configured"
+
+# ============================================================================
+# plasmanotifyrc - Notification settings
+# ============================================================================
+echo -e "${BLUE}Configuring notification settings...${NC}"
+
+kwriteconfig6 --file plasmanotifyrc --group Notifications --key PopupPosition "TopRight"
+
+echo -e "${GREEN}✓${NC} Notification settings applied"
+
+# ============================================================================
+# powerdevilrc - Power management
+# ============================================================================
+echo -e "${BLUE}Configuring power management...${NC}"
+
+# AC display settings - dim after 4 minutes, turn off after 5 minutes
+kwriteconfig6 --file powerdevilrc --group "AC" --group "Display" --key DimDisplayIdleTimeoutSec --type int 240
+kwriteconfig6 --file powerdevilrc --group "AC" --group "Display" --key TurnOffDisplayIdleTimeoutSec --type int 300
+
+echo -e "${GREEN}✓${NC} Power management configured"
+
+# ============================================================================
+# kcminputrc - Input device settings
+# ============================================================================
+echo -e "${BLUE}Configuring input devices...${NC}"
+
+# Razer DeathAdder V4 Pro - flat acceleration profile, no acceleration
+kwriteconfig6 --file kcminputrc --group "Libinput" --group "5426" --group "190" --group "Razer DeathAdder V4 Pro" --key PointerAcceleration "0.000"
+kwriteconfig6 --file kcminputrc --group "Libinput" --group "5426" --group "190" --group "Razer DeathAdder V4 Pro" --key PointerAccelerationProfile --type int 1
+
+# General mouse settings - flat acceleration profile
+kwriteconfig6 --file kcminputrc --group Mouse --key X11LibInputXAccelProfileFlat --type bool true
+kwriteconfig6 --file kcminputrc --group Mouse --key XLbInptPointerAcceleration --type double 0.2
+
+echo -e "${GREEN}✓${NC} Input device settings applied"
+
+# ============================================================================
+# Default applications (via xdg-mime)
+# ============================================================================
+echo -e "${BLUE}Setting default applications...${NC}"
+
+xdg-mime default brave-browser.desktop x-scheme-handler/http
+xdg-mime default brave-browser.desktop x-scheme-handler/https
+xdg-mime default brave-browser.desktop text/html
+
+echo -e "${GREEN}✓${NC} Default applications set"
+
+# ============================================================================
+# Reload KWin settings if running
+# ============================================================================
+if pgrep -x kwin_wayland >/dev/null 2>&1 || pgrep -x kwin_x11 >/dev/null 2>&1; then
+    echo ""
+    echo -e "${BLUE}Reconfiguring KWin...${NC}"
+    QDBUS=""
+    command -v qdbus-qt6 >/dev/null 2>&1 && QDBUS="qdbus-qt6"
+    command -v qdbus6 >/dev/null 2>&1 && QDBUS="qdbus6"
+    if [ -n "$QDBUS" ]; then
+        $QDBUS org.kde.KWin /KWin reconfigure 2>/dev/null || true
+    fi
+    echo -e "${GREEN}✓${NC} KWin reconfigured"
+fi
+
+echo ""
+echo -e "${GREEN}KDE Plasma settings applied successfully!${NC}"

@@ -1,0 +1,164 @@
+#!/bin/bash
+
+set -e
+
+{{- if or (ne .chezmoi.os "linux") (not (hasKey .chezmoi "osRelease")) (ne .chezmoi.osRelease.id "fedora") }}
+echo "Skipping Plasma panel configuration (not Fedora)"
+exit 0
+{{- end }}
+
+if ! command -v kwriteconfig6 >/dev/null 2>&1; then
+    echo "KDE Plasma not detected (kwriteconfig6 not found), skipping panel configuration"
+    exit 0
+fi
+
+# Find the correct qdbus binary
+QDBUS=""
+if command -v qdbus-qt6 >/dev/null 2>&1; then
+    QDBUS="qdbus-qt6"
+elif command -v qdbus6 >/dev/null 2>&1; then
+    QDBUS="qdbus6"
+else
+    echo "qdbus not found (need qdbus-qt6 or qdbus6), skipping panel configuration"
+    exit 0
+fi
+
+# Check that plasmashell is running (needed for evaluateScript)
+if ! pgrep -x plasmashell >/dev/null 2>&1; then
+    echo "plasmashell is not running, skipping panel configuration"
+    exit 0
+fi
+
+# Colors for output
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+echo "Configuring Plasma panel layout..."
+echo ""
+
+# ============================================================================
+# Remove existing panels and create new layout via Plasma scripting API
+# ============================================================================
+echo -e "${BLUE}Setting up panels...${NC}"
+
+$QDBUS org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript "
+// ---------------------------------------------------------------
+// Remove all existing panels
+// ---------------------------------------------------------------
+var allPanels = panels();
+for (var i = 0; i < allPanels.length; i++) {
+    allPanels[i].remove();
+}
+
+// ---------------------------------------------------------------
+// Bottom panel - Application launcher and taskbar
+// ---------------------------------------------------------------
+var bottomPanel = new Panel('org.kde.panel');
+bottomPanel.location = 'bottom';
+bottomPanel.alignment = 'center';
+bottomPanel.height = 2 * gridUnit;
+bottomPanel.floating = true;
+bottomPanel.lengthMode = 'fill';
+
+// Left spacer
+bottomPanel.addWidget('org.kde.plasma.panelspacer');
+
+// Application launcher (Kickoff) with Fedora icon
+var kickoff = bottomPanel.addWidget('org.kde.plasma.kickoff');
+kickoff.currentConfigGroup = ['General'];
+kickoff.writeConfig('icon', 'fedora-logo-icon');
+kickoff.writeConfig('favoritesPortedToKAstats', true);
+
+// Margin separator between launcher and taskbar
+bottomPanel.addWidget('org.kde.plasma.marginsseparator');
+
+// Icon-only task manager with pinned apps
+var taskManager = bottomPanel.addWidget('org.kde.plasma.icontasks');
+taskManager.currentConfigGroup = ['General'];
+taskManager.writeConfig('launchers', [
+    'applications:com.mitchellh.ghostty.desktop',
+    'preferred://browser',
+    'applications:me.proton.Mail.desktop',
+    'applications:1password.desktop',
+    'preferred://filemanager',
+    'applications:systemsettings.desktop',
+    'applications:md.obsidian.Obsidian.desktop'
+].join(','));
+
+// Right spacer
+bottomPanel.addWidget('org.kde.plasma.panelspacer');
+
+// ---------------------------------------------------------------
+// Top panel - Clock and system tray
+// ---------------------------------------------------------------
+var topPanel = new Panel('org.kde.panel');
+topPanel.location = 'top';
+topPanel.alignment = 'center';
+topPanel.height = gridUnit;
+topPanel.floating = true;
+
+// Left spacer
+topPanel.addWidget('org.kde.plasma.panelspacer');
+
+// Digital clock with custom format
+var clock = topPanel.addWidget('org.kde.plasma.digitalclock');
+clock.currentConfigGroup = ['Appearance'];
+clock.writeConfig('dateDisplayFormat', 'BesideTime');
+clock.writeConfig('dateFormat', 'custom');
+clock.writeConfig('customDateFormat', 'ddd d / M  -\s');
+clock.writeConfig('use24hFormat', 2);
+clock.writeConfig('fontFamily', 'Noto Sans');
+clock.writeConfig('fontWeight', 400);
+
+// Right spacer
+topPanel.addWidget('org.kde.plasma.panelspacer');
+
+// System tray
+var systray = topPanel.addWidget('org.kde.plasma.systemtray');
+" 2>&1
+
+if [ $? -eq 0 ]; then
+    echo -e "${GREEN}✓${NC} Panel layout created"
+else
+    echo -e "${YELLOW}Warning: Panel layout script returned an error. Panels may need manual adjustment.${NC}"
+fi
+
+# ============================================================================
+# Configure system tray and panel appearance via kwriteconfig6
+# These settings use the plasmashellrc and appletsrc files directly
+# since not all options are exposed through the Plasma scripting API
+# ============================================================================
+echo -e "${BLUE}Applying panel appearance settings...${NC}"
+
+# Wait briefly for Plasma to write the new panel config
+sleep 2
+
+# Find the system tray containment and configure it
+# Disable the Discover notifier in system tray
+APPLETS_FILE="$HOME/.config/plasma-org.kde.plasma.desktop-appletsrc"
+if [ -f "$APPLETS_FILE" ]; then
+    # Find system tray plugin entries and set pin + disable Discover notifier
+    # We iterate through the file to find the systemtray General group
+    SYSTRAY_GROUPS=$(grep -n "plugin=org.kde.plasma.systemtray" "$APPLETS_FILE" 2>/dev/null | head -5)
+    if [ -n "$SYSTRAY_GROUPS" ]; then
+        for line in $SYSTRAY_GROUPS; do
+            LINE_NUM=$(echo "$line" | cut -d: -f1)
+            # Read backwards to find the containment/applet group
+            SECTION=$(head -n "$LINE_NUM" "$APPLETS_FILE" | grep '^\[' | tail -1)
+            if [ -n "$SECTION" ]; then
+                # Construct the General config group path
+                GENERAL_GROUP="${SECTION%]}][General]"
+                kwriteconfig6 --file "$APPLETS_FILE" --group "${SECTION#[}" --group "General" --key pin --type bool true
+                kwriteconfig6 --file "$APPLETS_FILE" --group "${SECTION#[}" --group "General" --key disabledStatusNotifiers "Discover Notifier_org.kde.DiscoverNotifier"
+            fi
+        done
+        echo -e "${GREEN}✓${NC} System tray configured (pinned, Discover notifier disabled)"
+    fi
+fi
+
+echo ""
+echo -e "${GREEN}Plasma panel layout configured successfully!${NC}"
+echo ""
+echo -e "${YELLOW}Note: You may need to log out and back in for all panel changes to take full effect.${NC}"
