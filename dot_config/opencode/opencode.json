@@ -8,6 +8,9 @@
     "opencode-image-resizer@latest",
     "opencode-history-search",
   ],
+  "permission": {
+    "websearch": "allow"
+  },
   "agent": {
     "build": {
       "enable1mContext": true
