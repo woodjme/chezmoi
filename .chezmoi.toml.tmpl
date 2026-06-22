@@ -16,6 +16,7 @@
 {{- $signingkey = promptStringOnce . "signingkey" "Git SSH signing key (press Enter for default)" $defaultSigningKey -}}
 {{- end -}}
 {{- $installDesktopApps := promptBoolOnce . "installDesktopApps" "Install desktop apps (browsers, etc) (y/n)" -}}
+{{- $installAITools := promptBoolOnce . "installAITools" "Install AI tools (opencode) and global agent rules (y/n)" -}}
 {{- $useNvimSSH := promptBoolOnce . "useNvimSSH" "Clone nvim config via SSH (needs SSH keys configured) (y/n)" -}}
 {{- $fedoraHostname := "" -}}
 {{- if and (eq .chezmoi.os "linux") (hasKey .chezmoi "osRelease") (eq .chezmoi.osRelease.id "fedora") -}}
@@ -31,5 +32,6 @@
     signingkey = {{ $signingkey | quote }}
     use1PasswordSign = {{ $use1PasswordSign }}
     installDesktopApps = {{ $installDesktopApps }}
+    installAITools = {{ $installAITools }}
     useNvimSSH = {{ $useNvimSSH }}
     fedoraHostname = {{ $fedoraHostname | quote }}

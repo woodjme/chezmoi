@@ -9,11 +9,8 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-# Ask about AI tools
-echo ""
-read -p "Install AI tools (opencode)? (y/n): " -n 1 -r
-echo ""
-INSTALL_AI_TOOLS=$REPLY
+# AI tools choice comes from the chezmoi init prompt
+INSTALL_AI_TOOLS="{{ if .installAITools }}y{{ else }}n{{ end }}"
 
 check_installed() {
     if command -v "$1" >/dev/null 2>&1; then
