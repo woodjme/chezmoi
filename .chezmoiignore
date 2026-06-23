@@ -3,6 +3,8 @@
 {{- end }}
 {{ if not .installAITools -}}
 /AGENTS.md
+/.agents/skills
 /.config/opencode/AGENTS.md
 /.claude/CLAUDE.md
+/.claude/skills
 {{- end }}
