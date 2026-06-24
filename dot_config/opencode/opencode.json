@@ -35,6 +35,10 @@
     "todoist": {
       "type": "remote",
       "url": "https://ai.todoist.net/mcp"
+    },
+    "posthog": {
+      "type": "remote",
+      "url": "https://mcp.posthog.com/mcp"
     }
   }
 }
