@@ -28,10 +28,6 @@
     }
   },
   "mcp": {
-    "chrome-devtools": {
-      "type": "local",
-      "command": ["npx", "-y", "chrome-devtools-mcp@latest"]
-    },
     "todoist": {
       "type": "remote",
       "url": "https://ai.todoist.net/mcp"
