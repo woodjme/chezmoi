@@ -7,6 +7,8 @@ These are common instructions for Jamie's agents across all scenarios.
 - Never use the em dash "—". Use plain dash "-" instead.
 - When writing commit messages, NEVER auto-add your agent name as co-author.
 - Never manually modify `CHANGELOG.md` files or any files that are marked as auto-generated.
+- Use code comments sparingly, and keep them concise when they are used.
+  - Prefer self-explanatory code; reserve comments for the "why" rather than the "what".
 - When writing or substantially editing long Markdown files, put each full sentence on its own line.
   - Preserve normal Markdown structure, but avoid wrapping multiple sentences onto one physical line.
 - When making technical decisions, do not give much weight to development cost.
