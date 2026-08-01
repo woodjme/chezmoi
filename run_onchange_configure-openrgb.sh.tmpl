@@ -1,0 +1,51 @@
+#!/bin/bash
+
+set -e
+
+{{- if or (ne .chezmoi.os "linux") (not (hasKey .chezmoi "osRelease")) (ne .chezmoi.osRelease.id "fedora") (ne .fedoraHostname "fedora-desktop") }}
+echo "Skipping OpenRGB setup (not the fedora-desktop machine)"
+exit 0
+{{- end }}
+
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+echo -e "${BLUE}Configuring OpenRGB...${NC}"
+
+# Install from the package manager: the rpm ships openrgb-udev-rules, which the
+# sandboxed Flatpak build lacks, so only the rpm can actually reach the hardware.
+if ! rpm -q openrgb >/dev/null 2>&1; then
+    echo "Installing openrgb..."
+    sudo dnf install -y openrgb
+else
+    echo -e "${GREEN}✓${NC} openrgb already installed"
+fi
+
+# Drop the redundant Flatpak build if it is present.
+if flatpak list 2>/dev/null | grep -q "org.openrgb.OpenRGB"; then
+    echo "Removing redundant OpenRGB flatpak..."
+    sudo flatpak uninstall -y org.openrgb.OpenRGB
+else
+    echo -e "${GREEN}✓${NC} OpenRGB flatpak not present"
+fi
+
+# Apply the "Off" profile at boot via a oneshot system service.
+echo "Installing openrgb-off.service..."
+sudo tee /etc/systemd/system/openrgb-off.service >/dev/null <<'EOF'
+[Unit]
+Description=Apply OpenRGB "Off" profile at boot
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/openrgb --config {{ .chezmoi.homeDir }}/.config/OpenRGB --profile Off
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable openrgb-off.service
+
+echo -e "${GREEN}✓${NC} openrgb-off.service installed and enabled"

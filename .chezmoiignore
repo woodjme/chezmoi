@@ -8,3 +8,6 @@
 /.claude/CLAUDE.md
 /.claude/skills
 {{- end }}
+{{ if ne .fedoraHostname "fedora-desktop" -}}
+.config/OpenRGB/
+{{- end }}
