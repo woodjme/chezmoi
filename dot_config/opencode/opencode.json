@@ -7,7 +7,6 @@
     "envsitter-guard@latest",
     "opencode-image-resizer@latest",
     "opencode-history-search",
-    "@mohak34/opencode-notifier@latest",
   ],
   "permission": {
     "websearch": "allow"
