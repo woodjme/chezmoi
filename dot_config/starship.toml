@@ -1,3 +1,5 @@
+"$schema" = 'https://starship.rs/config-schema.json'
+
 format = """$username$hostname${custom.company}${custom.dir}$git_branch$git_status$git_state$character"""
 right_format = """$terraform${custom.awsprofile}"""
 
@@ -24,77 +26,52 @@ disabled = true
 
 [custom.company]
 command = '''
-if git rev-parse --show-toplevel &>/dev/null; then
-  repo_path=$(git rev-parse --show-toplevel)
-  repo_parent=$(dirname "$repo_path")
+d=$PWD; root=""
+while :; do
+  [[ -e $d/.git ]] && { root=$d; break; }
+  [[ $d == / || -z $d ]] && break
+  d=${d%/*}; [[ -z $d ]] && d=/
+done
+[[ -z $root ]] && exit 0
 
-  # Check if repo is under ~/git/
-  if [[ "$repo_parent" == "$HOME/git/"* ]] || [[ "$repo_parent" == "$HOME/git" ]]; then
-    company_name=$(basename "$repo_parent")
-    echo "${company_name}:"
-  fi
-fi
+parent=${root%/*}; [[ -z $parent ]] && parent=/
+[[ $parent == "$HOME/git" || $parent == "$HOME/git/"* ]] && echo "${parent##*/}:"
 '''
-when = "true"
+when = true
+require_repo = true
 style = "bold #f4005f"
 format = '[$output]($style)'
 shell = ["bash", "--noprofile", "--norc"]
 
 [custom.dir]
 command = '''
-truncate_dir() {
-  local dir="$1"
-  local max_len=12
-  if [ ${#dir} -gt $max_len ]; then
-    local prefix="${dir:0:6}"
-    local suffix="${dir: -5}"
-    echo "${prefix}.${suffix}"
-  else
-    echo "$dir"
-  fi
-}
+trunc() { local d=$1; if (( ${#d} > 12 )); then REPLY="${d:0:6}.${d: -5}"; else REPLY=$d; fi; }
 
-if git rev-parse --show-toplevel &>/dev/null; then
-  repo_root=$(basename $(git rev-parse --show-toplevel))
-  repo_path=$(git rev-parse --show-toplevel)
-  current_dir=$(basename "$PWD")
+d=$PWD; root=""
+while :; do
+  [[ -e $d/.git ]] && { root=$d; break; }
+  [[ $d == / || -z $d ]] && break
+  d=${d%/*}; [[ -z $d ]] && d=/
+done
 
-  # Get parent directory of repo (company name)
-  repo_parent=$(dirname "$repo_path")
-  company_name=$(basename "$repo_parent")
+cur=${PWD##*/}; [[ -z $cur ]] && cur=/
+[[ -z $root ]] && { echo "$cur"; exit 0; }
 
-  # Truncate long names
-  repo_root=$(truncate_dir "$repo_root")
-  current_dir=$(truncate_dir "$current_dir")
+trunc "${root##*/}"; repo=$REPLY
+[[ $PWD == "$root" ]] && { echo "$repo"; exit 0; }
 
-  # Count directories between repo root and current dir
-  rel_path="${PWD#$repo_path/}"
-  if [ "$rel_path" = "$PWD" ]; then
-    # We are at repo root
-    echo "${repo_root}"
-  else
-    # Count slashes to get depth
-    depth=$(echo "$rel_path" | tr -cd '/' | wc -c)
-    depth=$((depth))
+trunc "$cur"; cur=$REPLY
+rel=${PWD#"$root"/}; slashes=${rel//[!\/]}; depth=${#slashes}
 
-    if [ $depth -eq 0 ]; then
-      # Directly in subdirectory of repo root
-      echo "${repo_root}/$current_dir"
-    elif [ $depth -eq 1 ]; then
-      # One intermediate directory - show its name
-      intermediate=$(dirname "$rel_path")
-      intermediate=$(truncate_dir "$intermediate")
-      echo "${repo_root}/$intermediate/$current_dir"
-    else
-      # Multiple intermediate directories - show count in brackets (including current dir)
-      echo "${repo_root}/[$((depth + 1))]/$current_dir"
-    fi
-  fi
+if (( depth == 0 )); then
+  echo "$repo/$cur"
+elif (( depth == 1 )); then
+  trunc "${rel%%/*}"; echo "$repo/$REPLY/$cur"
 else
-  basename "$PWD"
+  echo "$repo/[$((depth + 1))]/$cur"
 fi
 '''
-when = "true"
+when = true
 style = "bold #58d1eb"
 format = '[$output]($style) '
 shell = ["bash", "--noprofile", "--norc"]
@@ -129,7 +106,7 @@ format = '[$symbol$workspace]($style) '
 
 [custom.awsprofile]
 command = 'if [ -n "$AWS_PROFILE" ]; then echo "aws:$AWS_PROFILE${AWS_PROFILE_REGION:+ ($AWS_PROFILE_REGION)}"; fi'
-when = "true"
+when = true
 style = "bold #fd971f"
 format = '[$output]($style) '
 shell = ["bash", "--noprofile", "--norc"]
