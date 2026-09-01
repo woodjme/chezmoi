@@ -35,6 +35,11 @@
     "posthog": {
       "type": "remote",
       "url": "https://mcp.posthog.com/mcp"
+    },
+    "metabase": {
+      "type": "remote",
+      "url": "https://metabase.zerobased.co.uk/api/metabase-mcp"
+      "enabled": false
     }
   }
 }
