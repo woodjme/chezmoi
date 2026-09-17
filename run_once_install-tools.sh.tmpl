@@ -93,6 +93,9 @@ check_installed bat || brew install bat
 # tree-sitter
 check_installed tree-sitter || brew install tree-sitter
 
+# sops (secrets encryption)
+check_installed sops || brew install sops
+
 # e1s (AWS ECS CLI)
 if ! check_installed e1s; then
     brew tap keidarcy/tap
@@ -218,6 +221,12 @@ fi
 # bat (modern cat)
 if ! check_installed bat; then
     sudo dnf install -y bat
+fi
+
+# sops (secrets encryption - not packaged in Fedora, use upstream RPM)
+if ! check_installed sops; then
+    SOPS_VERSION=$(curl -s "https://api.github.com/repos/getsops/sops/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
+    sudo dnf install -y "https://github.com/getsops/sops/releases/download/v${SOPS_VERSION}/sops-${SOPS_VERSION}-1.$(uname -m).rpm"
 fi
 
 # e1s (AWS ECS CLI)
@@ -522,6 +531,7 @@ if command -v bat >/dev/null 2>&1; then
 elif command -v batcat >/dev/null 2>&1; then
     echo "  - bat: $(batcat --version | cut -d' ' -f2)"
 fi
+command -v sops >/dev/null 2>&1 && echo "  - sops: $(sops --version --disable-version-check 2>&1 | head -n1 | awk '{print $2}')"
 command -v e1s >/dev/null 2>&1 && echo "  - e1s: $(e1s -v 2>&1 | grep 'Current:' | awk '{print $2}')"
 command -v session-manager-plugin >/dev/null 2>&1 && echo "  - session-manager-plugin: $(session-manager-plugin --version 2>&1)"
 [ -x "$HOME/.opencode/bin/opencode" ] && echo "  - opencode: $($HOME/.opencode/bin/opencode --version 2>&1)"
