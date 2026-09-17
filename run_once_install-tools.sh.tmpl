@@ -75,6 +75,9 @@ check_installed fd || brew install fd
 # lazygit
 check_installed lazygit || brew install lazygit
 
+# glab (GitLab CLI)
+check_installed glab || brew install glab
+
 # k9s (Kubernetes UI)
 check_installed k9s || brew install k9s
 
@@ -195,6 +198,11 @@ fi
 if ! check_installed lazygit; then
     sudo dnf copr enable -y atim/lazygit
     sudo dnf install -y lazygit
+fi
+
+# glab (GitLab CLI)
+if ! check_installed glab; then
+    sudo dnf install -y glab
 fi
 
 # k9s
@@ -520,6 +528,7 @@ elif command -v fdfind >/dev/null 2>&1; then
     echo "  - fdfind: $(fdfind --version 2>&1 | cut -d' ' -f2)"
 fi
 command -v lazygit >/dev/null 2>&1 && echo "  - lazygit: $(lazygit --version 2>&1 | grep 'version=' | sed 's/.*version=//' | cut -d',' -f1 | head -n1)"
+command -v glab >/dev/null 2>&1 && echo "  - glab: $(glab --version 2>&1 | head -n1 | awk '{print $3}')"
 command -v k9s >/dev/null 2>&1 && echo "  - k9s: $(k9s version -s 2>&1 | head -n1 | awk '{print $2}')"
 command -v luarocks >/dev/null 2>&1 && echo "  - luarocks: $(luarocks --version | head -n1 | cut -d' ' -f2)"
 command -v op >/dev/null 2>&1 && echo "  - 1password-cli: $(op --version)"
