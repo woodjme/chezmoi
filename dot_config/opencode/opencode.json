@@ -38,7 +38,7 @@
     },
     "metabase": {
       "type": "remote",
-      "url": "https://metabase.zerobased.co.uk/api/metabase-mcp"
+      "url": "https://metabase.zerobased.co.uk/api/metabase-mcp",
       "enabled": false
     }
   }
