@@ -1,0 +1,151 @@
+#!/bin/bash
+
+set -e
+
+{{- if ne .chezmoi.os "darwin" }}
+echo "Skipping macOS defaults (not running macOS)"
+exit 0
+{{- end }}
+
+echo "Configuring macOS defaults..."
+
+#######################################
+# Animations
+#######################################
+
+# Opening and closing windows and popovers
+defaults write -g NSAutomaticWindowAnimationsEnabled -bool false
+
+# Smooth scrolling
+defaults write -g NSScrollAnimationEnabled -bool false
+
+# Showing and hiding sheets, resizing preference windows, zooming windows
+defaults write -g NSWindowResizeTime -float 0.001
+
+# Opening and closing Quick Look windows
+defaults write -g QLPanelAnimationDuration -float 0
+
+# Rubberband scrolling (doesn't affect web views)
+defaults write -g NSScrollViewRubberbanding -bool false
+
+# Resizing windows before and after showing the version browser
+defaults write -g NSDocumentRevisionsWindowTransformAnimation -bool false
+
+# Showing a toolbar or menu bar in full screen
+defaults write -g NSToolbarFullScreenAnimationDuration -float 0
+
+# Scrolling column views
+defaults write -g NSBrowserColumnAnimationSpeedMultiplier -float 0
+
+# Showing the Dock
+defaults write com.apple.dock autohide-time-modifier -float 0
+defaults write com.apple.dock autohide-delay -float 0
+
+# Showing and hiding Mission Control, command+numbers
+defaults write com.apple.dock expose-animation-duration -float 0
+
+# Showing and hiding Launchpad
+defaults write com.apple.dock springboard-show-duration -float 0
+defaults write com.apple.dock springboard-hide-duration -float 0
+
+# Changing pages in Launchpad
+defaults write com.apple.dock springboard-page-duration -float 0
+
+# Finder animations
+defaults write com.apple.finder DisableAllAnimations -bool true
+
+#######################################
+# Dock appearance
+#######################################
+
+defaults write com.apple.dock tilesize -int 44
+defaults write com.apple.dock orientation -string bottom
+defaults write com.apple.dock autohide -bool false
+defaults write com.apple.dock magnification -bool false
+defaults write com.apple.dock show-recents -bool false
+defaults write com.apple.dock show-process-indicators -bool true
+
+#######################################
+# Dock contents
+#######################################
+
+# Pinned apps, in order. Entries whose app is not installed are skipped so a
+# machine missing one gets a shorter dock rather than a broken tile.
+dock_apps=(
+    "/Applications/Brave Browser.app"
+    "/Applications/Ghostty.app"
+    "/Applications/Visual Studio Code.app"
+    "/System/Applications/Messages.app"
+    "/Applications/Todoist.app"
+    "/System/Applications/Mail.app"
+    "/System/Applications/Calendar.app"
+    "/System/Applications/Notes.app"
+    "/Applications/1Password.app"
+    "/Applications/Slack.app"
+)
+
+# The Dock regenerates bookmark, label and icon metadata on restart, so a tile
+# only needs to declare its URL.
+dock_tile() {
+    printf '<dict><key>tile-data</key><dict><key>file-data</key><dict><key>_CFURLString</key><string>file://%s/</string><key>_CFURLStringType</key><integer>15</integer></dict></dict><key>tile-type</key><string>file-tile</string></dict>' "${1// /%20}"
+}
+
+dock_tiles=()
+for app in "${dock_apps[@]}"; do
+    if [ -e "$app" ]; then
+        dock_tiles+=("$(dock_tile "$app")")
+    else
+        echo "  Skipping dock entry, app not installed: $app"
+    fi
+done
+
+if [ ${#dock_tiles[@]} -gt 0 ]; then
+    defaults write com.apple.dock persistent-apps -array "${dock_tiles[@]}"
+fi
+
+#######################################
+# Desktop
+#######################################
+
+# No desktop widgets
+defaults write com.apple.WindowManager StandardHideWidgets -int 1
+defaults write com.apple.WindowManager StageManagerHideWidgets -int 1
+
+defaults write com.apple.finder ShowHardDrivesOnDesktop -bool false
+defaults write com.apple.finder ShowExternalHardDrivesOnDesktop -bool true
+defaults write com.apple.finder ShowRemovableMediaOnDesktop -bool true
+defaults write com.apple.finder ShowMountedServersOnDesktop -bool false
+
+#######################################
+# Menu bar
+#######################################
+
+defaults write com.apple.menuextra.clock ShowAMPM -bool true
+defaults write com.apple.menuextra.clock ShowDayOfWeek -bool true
+defaults write com.apple.menuextra.clock ShowDate -int 0
+
+# Control Center modules. These are per-host, and macOS 26 renamed the old
+# "NSStatusItem Visible <module>" keys, so the module name is the key now.
+# 2 = hidden, 8 = show when active, 18 = always show in the menu bar.
+control_center_modules=(
+    "AirDrop:8"
+    "Display:2"
+    "FocusModes:8"
+    "NowPlaying:8"
+    "Sound:8"
+    "Spotlight:8"
+    "VoiceControl:8"
+    "Weather:8"
+)
+
+for module in "${control_center_modules[@]}"; do
+    defaults -currentHost write com.apple.controlcenter "${module%%:*}" -int "${module##*:}"
+done
+
+#######################################
+
+killall Dock || true
+killall Finder || true
+killall ControlCenter 2>/dev/null || true
+
+echo "macOS defaults configured."

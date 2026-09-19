@@ -78,6 +78,14 @@ else
     echo -e "${GREEN}✓${NC} Hammerspoon is already installed"
 fi
 
+# Visual Studio Code
+if ! brew list --cask visual-studio-code >/dev/null 2>&1; then
+    echo "Installing Visual Studio Code..."
+    brew install --cask visual-studio-code
+else
+    echo -e "${GREEN}✓${NC} Visual Studio Code is already installed"
+fi
+
 {{- else if eq .chezmoi.os "linux" }}
 {{- if eq .chezmoi.osRelease.id "fedora" }}
 # Fedora installations
