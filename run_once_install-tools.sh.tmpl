@@ -112,6 +112,16 @@ if [[ $INSTALL_AI_TOOLS =~ ^[Yy]$ ]] && ! check_installed opencode; then
     curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path
 fi
 
+# Claude Code. The @latest cask tracks newer builds than the plain claude-code
+# cask, and provides the claude binary rather than an app bundle.
+if [[ $INSTALL_AI_TOOLS =~ ^[Yy]$ ]]; then
+    if ! brew list --cask claude-code@latest >/dev/null 2>&1; then
+        brew install --cask claude-code@latest
+    else
+        echo -e "${GREEN}✓${NC} Claude Code is already installed"
+    fi
+fi
+
 # AWS Session Manager Plugin
 if ! check_installed session-manager-plugin; then
     curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/mac_arm64/session-manager-plugin.pkg" -o "/tmp/session-manager-plugin.pkg"
