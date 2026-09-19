@@ -32,58 +32,72 @@ if ! command -v brew >/dev/null 2>&1; then
     exit 1
 fi
 
-# Fira Code font
-if ! brew list --cask font-fira-code >/dev/null 2>&1; then
-    echo "Installing Fira Code font..."
-    brew install --cask font-fira-code
-else
-    echo -e "${GREEN}✓${NC} Fira Code font is already installed"
+# One app failing should not stop the rest from installing, so failures are
+# reported and the run continues.
+failed_apps=()
+
+# --adopt lets brew take over an app that was already installed by hand, which
+# it otherwise refuses to overwrite.
+install_cask() {
+    local cask="$1" name="$2" app="$3"
+
+    if brew list --cask "$cask" >/dev/null 2>&1; then
+        echo -e "${GREEN}✓${NC} $name is already installed"
+        return 0
+    fi
+
+    echo "Installing $name..."
+    local args=(install --cask)
+    if [ -n "$app" ] && [ -d "$app" ]; then
+        args+=(--adopt)
+    fi
+
+    if ! brew "${args[@]}" "$cask"; then
+        echo -e "${YELLOW}Could not install $name${NC}"
+        failed_apps+=("$name")
+    fi
+}
+
+# Installing needs the app to already be in this Apple ID's purchase history,
+# so a failure here is reported rather than treated as fatal.
+install_app_store_app() {
+    local id="$1" name="$2"
+
+    if [ -d "/Applications/$name.app" ]; then
+        echo -e "${GREEN}✓${NC} $name is already installed"
+        return 0
+    fi
+
+    echo "Installing $name from the App Store..."
+    if ! mas install "$id" >/dev/null 2>&1; then
+        echo -e "${YELLOW}Could not install $name${NC}"
+        echo "  Sign in to the App Store, confirm it is in your purchases, then: mas install $id"
+        failed_apps+=("$name")
+    fi
+}
+
+install_cask font-fira-code "Fira Code font"
+install_cask ghostty "Ghostty" "/Applications/Ghostty.app"
+install_cask brave-browser "Brave browser" "/Applications/Brave Browser.app"
+install_cask obsidian "Obsidian" "/Applications/Obsidian.app"
+install_cask todoist "Todoist" "/Applications/Todoist.app"
+install_cask hammerspoon "Hammerspoon" "/Applications/Hammerspoon.app"
+install_cask visual-studio-code "Visual Studio Code" "/Applications/Visual Studio Code.app"
+install_cask keepingyouawake "KeepingYouAwake" "/Applications/KeepingYouAwake.app"
+install_cask opensuperwhisper "OpenSuperWhisper" "/Applications/OpenSuperWhisper.app"
+
+# mas is installed here rather than with the other CLI tools because that
+# script runs after this one.
+if ! command -v mas >/dev/null 2>&1; then
+    echo "Installing mas..."
+    brew install mas
 fi
 
-# Ghostty terminal
-if ! check_installed ghostty; then
-    echo "Installing Ghostty..."
-    brew install --cask ghostty
-fi
+install_app_store_app 441258766 "Magnet"
+install_app_store_app 1295203466 "Windows App"
 
-# Brave browser
-if ! brew list --cask brave-browser >/dev/null 2>&1; then
-    echo "Installing Brave browser..."
-    brew install --cask brave-browser
-else
-    echo -e "${GREEN}✓${NC} Brave browser is already installed"
-fi
-
-# Obsidian
-if ! brew list --cask obsidian >/dev/null 2>&1; then
-    echo "Installing Obsidian..."
-    brew install --cask obsidian
-else
-    echo -e "${GREEN}✓${NC} Obsidian is already installed"
-fi
-
-# Todoist
-if ! brew list --cask todoist >/dev/null 2>&1; then
-    echo "Installing Todoist..."
-    brew install --cask todoist
-else
-    echo -e "${GREEN}✓${NC} Todoist is already installed"
-fi
-
-# Hammerspoon
-if ! brew list --cask hammerspoon >/dev/null 2>&1; then
-    echo "Installing Hammerspoon..."
-    brew install --cask hammerspoon
-else
-    echo -e "${GREEN}✓${NC} Hammerspoon is already installed"
-fi
-
-# Visual Studio Code
-if ! brew list --cask visual-studio-code >/dev/null 2>&1; then
-    echo "Installing Visual Studio Code..."
-    brew install --cask visual-studio-code
-else
-    echo -e "${GREEN}✓${NC} Visual Studio Code is already installed"
+if [ ${#failed_apps[@]} -gt 0 ]; then
+    echo -e "${YELLOW}Some apps did not install: ${failed_apps[*]}${NC}"
 fi
 
 {{- else if eq .chezmoi.os "linux" }}
