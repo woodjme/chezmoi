@@ -89,6 +89,12 @@ check_installed luarocks || brew install luarocks
 # jq (JSON processor)
 check_installed jq || brew install jq
 
+# tmux (terminal multiplexer, config lives in .config/tmux)
+check_installed tmux || brew install tmux
+
+# gh (GitHub CLI)
+check_installed gh || brew install gh
+
 # starship (shell prompt)
 check_installed starship || brew install starship
 
@@ -120,6 +126,12 @@ if [[ $INSTALL_AI_TOOLS =~ ^[Yy]$ ]]; then
     else
         echo -e "${GREEN}✓${NC} Claude Code is already installed"
     fi
+fi
+
+# herdr (agent multiplexer). Left as a plain binary rather than started with
+# brew services, so nothing runs in the background unless asked for.
+if [[ $INSTALL_AI_TOOLS =~ ^[Yy]$ ]]; then
+    check_installed herdr || brew install herdr
 fi
 
 # AWS Session Manager Plugin
@@ -231,6 +243,16 @@ fi
 # jq (JSON processor)
 if ! check_installed jq; then
     sudo dnf install -y jq
+fi
+
+# tmux (terminal multiplexer, config lives in .config/tmux)
+if ! check_installed tmux; then
+    sudo dnf install -y tmux
+fi
+
+# gh (GitHub CLI)
+if ! check_installed gh; then
+    sudo dnf install -y gh
 fi
 
 # starship (shell prompt)
@@ -388,6 +410,24 @@ if ! check_installed jq; then
     sudo apt-get install -y jq
 fi
 
+# tmux (terminal multiplexer, config lives in .config/tmux)
+if ! check_installed tmux; then
+    sudo apt-get install -y tmux
+fi
+
+# gh (GitHub CLI). Installed from GitHub's own repository because the version
+# in the distribution repositories is usually well behind.
+if ! check_installed gh; then
+    sudo mkdir -p -m 755 /etc/apt/keyrings
+    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+        | sudo tee /etc/apt/keyrings/githubcli-archive-keyring.gpg >/dev/null
+    sudo chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+        | sudo tee /etc/apt/sources.list.d/github-cli.list >/dev/null
+    sudo apt-get update
+    sudo apt-get install -y gh
+fi
+
 # starship (shell prompt)
 if ! check_installed starship; then
     curl -sS https://starship.rs/install.sh | sh -s -- -y
@@ -444,6 +484,24 @@ if ! check_installed rg; then
         sudo dnf install -y ripgrep
     elif command -v apt-get >/dev/null 2>&1; then
         sudo apt-get install -y ripgrep
+    fi
+fi
+
+# tmux (terminal multiplexer, config lives in .config/tmux)
+if ! check_installed tmux; then
+    if command -v dnf >/dev/null 2>&1; then
+        sudo dnf install -y tmux
+    elif command -v apt-get >/dev/null 2>&1; then
+        sudo apt-get install -y tmux
+    fi
+fi
+
+# gh (GitHub CLI)
+if ! check_installed gh; then
+    if command -v dnf >/dev/null 2>&1; then
+        sudo dnf install -y gh
+    elif command -v apt-get >/dev/null 2>&1; then
+        sudo apt-get install -y gh
     fi
 fi
 
