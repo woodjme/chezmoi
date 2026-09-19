@@ -11,3 +11,6 @@
 {{ if ne .fedoraHostname "fedora-desktop" -}}
 .config/OpenRGB/
 {{- end }}
+{{ if ne .chezmoi.os "darwin" -}}
+.hammerspoon
+{{- end }}
