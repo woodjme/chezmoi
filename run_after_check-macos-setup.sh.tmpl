@@ -14,7 +14,7 @@ NC='\033[0m'
 SOCKETFILTERFW=/usr/libexec/ApplicationFirewall/socketfilterfw
 
 echo ""
-echo "Checking macOS security settings..."
+echo "Checking macOS settings..."
 
 # Escalate only when something actually needs changing, so a machine that is
 # already configured never prompts for a password.
@@ -59,6 +59,19 @@ if command -v fdesetup >/dev/null 2>&1; then
 fi
 
 #######################################
+# Preferred reading size
+#######################################
+
+# Cannot be scripted: com.apple.universalaccess is TCC protected, so every
+# write is refused unless the calling terminal has Full Disk Access. Reading
+# is allowed, so this only reports, and stops once the size has been changed.
+text_size_ok=true
+if [ "$(defaults read com.apple.universalaccess FontSizeCategory 2>/dev/null \
+    | awk '$1 == "global" { print $3 }' | tr -d ';')" = "L" ]; then
+    text_size_ok=false
+fi
+
+#######################################
 # Summary
 #######################################
 
@@ -77,5 +90,11 @@ else
     echo "    Enable it in System Settings > Privacy & Security > FileVault,"
     echo "    or run: sudo fdesetup enable"
     echo "    Store the recovery key it prints somewhere safe."
+fi
+
+if [ "$text_size_ok" != true ]; then
+    echo -e "  ${YELLOW}!${NC} Preferred reading size is still the default"
+    echo "    Set it to 14pt in System Settings > Accessibility > Display > Text size."
+    echo "    It cannot be scripted, as macOS protects that preference."
 fi
 echo ""
