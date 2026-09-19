@@ -1,3 +1,7 @@
 {{- if .use1PasswordAWS -}}
+{{- if .onepasswordAccount -}}
+{{- onepasswordDocument "aws-config" "" .onepasswordAccount -}}
+{{- else -}}
 {{- onepasswordDocument "aws-config" -}}
+{{- end -}}
 {{- end -}}
