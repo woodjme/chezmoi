@@ -51,9 +51,11 @@ check_installed tfenv || brew install tfenv
 # n (node version manager)
 check_installed n || brew install n
 
-# Docker Desktop
-if ! check_installed docker; then
-    brew install --cask docker
+# OrbStack (provides the docker CLI, so check the cask rather than the binary)
+if ! brew list --cask orbstack >/dev/null 2>&1; then
+    brew install --cask orbstack
+else
+    echo -e "${GREEN}✓${NC} OrbStack is already installed"
 fi
 
 # htop
