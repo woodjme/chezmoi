@@ -1,0 +1,81 @@
+#!/bin/bash
+
+set -e
+
+{{- if ne .chezmoi.os "darwin" }}
+exit 0
+{{- end }}
+
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m'
+
+SOCKETFILTERFW=/usr/libexec/ApplicationFirewall/socketfilterfw
+
+echo ""
+echo "Checking macOS security settings..."
+
+# Escalate only when something actually needs changing, so a machine that is
+# already configured never prompts for a password.
+run_privileged() {
+    if sudo -n true 2>/dev/null || [ -t 0 ]; then
+        sudo "$@"
+        return $?
+    fi
+    return 1
+}
+
+#######################################
+# Firewall
+#######################################
+
+firewall_ok=false
+if [ -x "$SOCKETFILTERFW" ]; then
+    if "$SOCKETFILTERFW" --getglobalstate 2>/dev/null | grep -q "State = [12]"; then
+        firewall_ok=true
+    else
+        echo "  Firewall is off, enabling..."
+        if run_privileged "$SOCKETFILTERFW" --setglobalstate on >/dev/null 2>&1; then
+            firewall_ok=true
+        else
+            echo -e "  ${YELLOW}Could not enable the firewall without a password. Run:${NC}"
+            echo "    sudo $SOCKETFILTERFW --setglobalstate on"
+        fi
+    fi
+fi
+
+#######################################
+# FileVault
+#######################################
+
+# Never enabled automatically: turning FileVault on issues a recovery key that
+# has to be stored somewhere safe, and losing it means losing the disk.
+filevault_ok=false
+if command -v fdesetup >/dev/null 2>&1; then
+    if fdesetup status 2>/dev/null | grep -q "FileVault is On"; then
+        filevault_ok=true
+    fi
+fi
+
+#######################################
+# Summary
+#######################################
+
+echo ""
+if [ "$firewall_ok" = true ]; then
+    echo -e "  ${GREEN}✓${NC} Firewall enabled"
+else
+    echo -e "  ${RED}✗${NC} Firewall disabled"
+fi
+
+if [ "$filevault_ok" = true ]; then
+    echo -e "  ${GREEN}✓${NC} FileVault disk encryption enabled"
+else
+    echo -e "  ${RED}✗${NC} FileVault disk encryption is OFF"
+    echo -e "    ${YELLOW}This disk is unencrypted. Anyone with physical access can read it.${NC}"
+    echo "    Enable it in System Settings > Privacy & Security > FileVault,"
+    echo "    or run: sudo fdesetup enable"
+    echo "    Store the recovery key it prints somewhere safe."
+fi
+echo ""
