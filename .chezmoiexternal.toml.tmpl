@@ -22,3 +22,13 @@
     url = "https://github.com/woodjme/.conf-nvim.git"
     refreshPeriod = "1m"
 {{- end }}
+
+{{- if .installAITools }}
+
+[".config/opencode/vendor/i-have-adhd"]
+    type = "archive"
+    url = "https://github.com/ayghri/i-have-adhd/archive/main.tar.gz"
+    exact = true
+    stripComponents = 1
+    refreshPeriod = "24h"
+{{- end }}
