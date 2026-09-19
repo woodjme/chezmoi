@@ -107,6 +107,15 @@ check_installed tree-sitter || brew install tree-sitter
 # sops (secrets encryption)
 check_installed sops || brew install sops
 
+# libpq (provides psql). Keg-only, so brew never links its binaries into the
+# prefix - check the formula rather than the binary, and see .zshrc for the
+# PATH entry that exposes psql.
+if ! brew list libpq >/dev/null 2>&1; then
+    brew install libpq
+else
+    echo -e "${GREEN}✓${NC} libpq is already installed"
+fi
+
 # e1s (AWS ECS CLI)
 if ! check_installed e1s; then
     brew tap keidarcy/tap
@@ -611,6 +620,11 @@ elif command -v batcat >/dev/null 2>&1; then
     echo "  - bat: $(batcat --version | cut -d' ' -f2)"
 fi
 command -v sops >/dev/null 2>&1 && echo "  - sops: $(sops --version --disable-version-check 2>&1 | head -n1 | awk '{print $2}')"
+if command -v psql >/dev/null 2>&1; then
+    echo "  - psql: $(psql --version | awk '{print $3}')"
+elif [ -x /opt/homebrew/opt/libpq/bin/psql ]; then
+    echo "  - psql: $(/opt/homebrew/opt/libpq/bin/psql --version | awk '{print $3}')"
+fi
 command -v e1s >/dev/null 2>&1 && echo "  - e1s: $(e1s -v 2>&1 | grep 'Current:' | awk '{print $2}')"
 command -v session-manager-plugin >/dev/null 2>&1 && echo "  - session-manager-plugin: $(session-manager-plugin --version 2>&1)"
 [ -x "$HOME/.opencode/bin/opencode" ] && echo "  - opencode: $($HOME/.opencode/bin/opencode --version 2>&1)"
