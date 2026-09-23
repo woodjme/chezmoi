@@ -3,10 +3,10 @@
   "autoupdate": false,
   "theme": "system",
   "plugin": [
-    "opencode-claude-auth@latest",
+    "opencode-claude-auth@2.2.1",
+    "opencode-history-search@1.5.1",
     "envsitter-guard@latest",
     "opencode-image-resizer@latest",
-    "opencode-history-search",
     "./vendor/i-have-adhd/.opencode/plugins/i-have-adhd.mjs"
   ],
   "permission": {
@@ -18,14 +18,6 @@
     },
     "plan": {
       "enable1mContext": true
-    },
-    "lite-build": {
-      "model": "anthropic/claude-sonnet-4-6",
-      "tools": {
-        "write": true,
-        "edit": true,
-        "bash": true
-      }
     }
   },
   "mcp": {
