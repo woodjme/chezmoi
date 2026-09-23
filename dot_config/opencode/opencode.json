@@ -12,14 +12,6 @@
   "permission": {
     "websearch": "allow"
   },
-  "agent": {
-    "build": {
-      "enable1mContext": true
-    },
-    "plan": {
-      "enable1mContext": true
-    }
-  },
   "mcp": {
     "todoist": {
       "type": "remote",
