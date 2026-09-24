@@ -71,11 +71,23 @@ if [ "$(defaults read com.apple.universalaccess FontSizeCategory 2>/dev/null \
     text_size_ok=false
 fi
 
-# The only native way to shorten the Space switching slide, which it replaces
-# with a crossfade.
+# Swaps sliding and zooming animations for fades, which also covers Space
+# switching whenever InstantSpaceSwitcher is not running.
 reduce_motion_ok=false
 if [ "$(defaults read com.apple.universalaccess reduceMotion 2>/dev/null)" = "1" ]; then
     reduce_motion_ok=true
+fi
+
+#######################################
+# Instant space switching
+#######################################
+
+# Only checked once installed, as the install is skipped when desktop apps are
+# disabled.
+ISS_APP="/Applications/InstantSpaceSwitcher.app"
+iss_running=true
+if [ -d "$ISS_APP" ] && ! pgrep -xq InstantSpaceSwitcher; then
+    iss_running=false
 fi
 
 #######################################
@@ -106,8 +118,13 @@ if [ "$text_size_ok" != true ]; then
 fi
 
 if [ "$reduce_motion_ok" != true ]; then
-    echo -e "  ${YELLOW}!${NC} Reduce motion is off, so switching Spaces slides"
+    echo -e "  ${YELLOW}!${NC} Reduce motion is off, so macOS animations slide and zoom"
     echo "    Turn it on in System Settings > Accessibility > Motion > Reduce motion."
     echo "    It cannot be scripted, as macOS protects that preference."
+fi
+
+if [ "$iss_running" != true ]; then
+    echo -e "  ${YELLOW}!${NC} InstantSpaceSwitcher is not running, so switching Spaces animates"
+    echo "    Open it from /Applications. It starts at login from then on."
 fi
 echo ""

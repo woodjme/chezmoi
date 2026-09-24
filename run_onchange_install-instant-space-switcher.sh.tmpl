@@ -1,0 +1,73 @@
+#!/bin/bash
+
+set -e
+
+{{- if ne .chezmoi.os "darwin" }}
+echo "Skipping InstantSpaceSwitcher (not running macOS)"
+exit 0
+{{- else if not .installDesktopApps }}
+echo "Skipping InstantSpaceSwitcher (disabled in config)"
+exit 0
+{{- end }}
+
+# InstantSpaceSwitcher removes the slide from three-finger swipes between
+# Spaces. Its releases predate macOS 27 support, so it is built from the
+# maintainer's macos-27 branch at a pinned commit.
+ISS_REPO="https://github.com/jurplel/InstantSpaceSwitcher.git"
+ISS_COMMIT="bf32cf9732c706119e8307d2d70ae795b2b11c1c"
+
+APP="/Applications/InstantSpaceSwitcher.app"
+BUNDLE_ID="com.interversehq.InstantSpaceSwitcher"
+
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+echo "Installing InstantSpaceSwitcher..."
+
+# Accessibility is granted to one exact build, and rebuilding the same commit
+# does not reproduce it, so the commit the app was built from decides whether
+# to rebuild. build.sh records it in Info.plist.
+installed_commit="$(/usr/libexec/PlistBuddy -c "Print :GitCommitHash" \
+    "$APP/Contents/Info.plist" 2>/dev/null || true)"
+
+if [ ${#installed_commit} -ge 7 ] && [[ "$ISS_COMMIT" == "$installed_commit"* ]]; then
+    echo -e "${GREEN}✓${NC} InstantSpaceSwitcher is already up to date"
+else
+    if ! command -v swift >/dev/null 2>&1; then
+        echo -e "${YELLOW}Could not build InstantSpaceSwitcher: no Swift toolchain.${NC}"
+        echo "  Run xcode-select --install, then chezmoi apply."
+        exit 1
+    fi
+
+    src="$(mktemp -d)"
+    log="$(mktemp)"
+    trap 'rm -rf "$src" "$log"' EXIT
+
+    # Fetching by commit makes git verify the source matches the pinned hash.
+    git -C "$src" init -q
+    git -C "$src" fetch -q --depth 1 "$ISS_REPO" "$ISS_COMMIT"
+    git -C "$src" checkout -q FETCH_HEAD
+
+    echo "  Building from source, which takes about a minute..."
+    if ! (cd "$src" && ./dist/build.sh >"$log" 2>&1); then
+        cat "$log"
+        echo -e "${YELLOW}Could not build InstantSpaceSwitcher${NC}"
+        exit 1
+    fi
+
+    killall InstantSpaceSwitcher 2>/dev/null || true
+    rm -rf "$APP"
+    ditto "$src/build/InstantSpaceSwitcher.app" "$APP"
+
+    echo -e "${YELLOW}InstantSpaceSwitcher was installed or updated, so it needs Accessibility permission.${NC}"
+    echo "  Allow it in System Settings > Privacy & Security > Accessibility,"
+    echo "  then quit it from the menu bar and open it again."
+fi
+
+# Read at launch, so a copy that is already running applies it after a restart.
+defaults write "$BUNDLE_ID" swipeOverride -bool true
+
+if ! pgrep -xq InstantSpaceSwitcher; then
+    open -g "$APP"
+fi
