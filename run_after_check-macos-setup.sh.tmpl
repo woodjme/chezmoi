@@ -59,30 +59,23 @@ if command -v fdesetup >/dev/null 2>&1; then
 fi
 
 #######################################
-# Preferred reading size
+# Accessibility preferences
 #######################################
 
 # Cannot be scripted: com.apple.universalaccess is TCC protected, so every
 # write is refused unless the calling terminal has Full Disk Access. Reading
-# is allowed, so this only reports, and stops once the size has been changed.
+# is allowed, so these only report, and stop once each has been changed.
 text_size_ok=true
 if [ "$(defaults read com.apple.universalaccess FontSizeCategory 2>/dev/null \
     | awk '$1 == "global" { print $3 }' | tr -d ';')" = "L" ]; then
     text_size_ok=false
 fi
 
-#######################################
-# Instant space switching
-#######################################
-
-# iss keeps running when Accessibility is revoked but disables its event tap,
-# so the log's last line tells an active tap from an idle one.
-ISS_BIN="$HOME/.local/bin/iss"
-ISS_LABEL="gui/$(id -u)/com.instant-swipe"
-iss_ok=false
-if launchctl print "$ISS_LABEL" 2>/dev/null | grep -q "state = running" \
-    && ! tail -n 1 "$HOME/Library/Logs/iss.log" 2>/dev/null | grep -qE "removed|disabled"; then
-    iss_ok=true
+# The only native way to shorten the Space switching slide, which it replaces
+# with a crossfade.
+reduce_motion_ok=false
+if [ "$(defaults read com.apple.universalaccess reduceMotion 2>/dev/null)" = "1" ]; then
+    reduce_motion_ok=true
 fi
 
 #######################################
@@ -106,20 +99,15 @@ else
     echo "    Store the recovery key it prints somewhere safe."
 fi
 
-if [ "$iss_ok" = true ]; then
-    echo -e "  ${GREEN}✓${NC} Instant space switching active"
-elif [ ! -x "$ISS_BIN" ]; then
-    echo -e "  ${RED}✗${NC} Instant space switching is not installed"
-    echo "    Re-run chezmoi apply and check the iss install output."
-else
-    echo -e "  ${YELLOW}!${NC} Instant space switching needs Accessibility permission"
-    echo "    Allow $ISS_BIN in System Settings > Privacy & Security > Accessibility."
-    echo "    It cannot be scripted, as macOS protects that permission."
-fi
-
 if [ "$text_size_ok" != true ]; then
     echo -e "  ${YELLOW}!${NC} Preferred reading size is still the default"
     echo "    Set it to 14pt in System Settings > Accessibility > Display > Text size."
+    echo "    It cannot be scripted, as macOS protects that preference."
+fi
+
+if [ "$reduce_motion_ok" != true ]; then
+    echo -e "  ${YELLOW}!${NC} Reduce motion is off, so switching Spaces slides"
+    echo "    Turn it on in System Settings > Accessibility > Motion > Reduce motion."
     echo "    It cannot be scripted, as macOS protects that preference."
 fi
 echo ""
