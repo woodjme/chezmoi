@@ -89,6 +89,7 @@ install_cask spotify "Spotify" "/Applications/Spotify.app"
 install_cask slack "Slack" "/Applications/Slack.app"
 install_cask discord "Discord" "/Applications/Discord.app"
 install_cask whatsapp "WhatsApp" "/Applications/WhatsApp.app"
+install_cask vivid-app "Vivid" "/Applications/Vivid.app"
 
 # mas is installed here rather than with the other CLI tools because that
 # script runs after this one.
@@ -256,7 +257,11 @@ echo ""
 echo -e "${GREEN}Desktop applications installation complete!${NC}"
 echo ""
 echo "Installed:"
+{{- if eq .chezmoi.os "darwin" }}
+compgen -G "$HOME/Library/Fonts/FiraCode-*" >/dev/null && echo "  - Fira Code font ✓"
+{{- else }}
 fc-list | grep -qi "fira code" && echo "  - Fira Code font ✓"
+{{- end }}
 if command -v ghostty >/dev/null 2>&1; then
     GHOSTTY_VERSION=$(ghostty --version 2>&1 | head -n1)
     echo "  - Ghostty: $GHOSTTY_VERSION"
