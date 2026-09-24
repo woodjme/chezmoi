@@ -72,6 +72,20 @@ if [ "$(defaults read com.apple.universalaccess FontSizeCategory 2>/dev/null \
 fi
 
 #######################################
+# Instant space switching
+#######################################
+
+# iss keeps running when Accessibility is revoked but disables its event tap,
+# so the log's last line tells an active tap from an idle one.
+ISS_BIN="$HOME/.local/bin/iss"
+ISS_LABEL="gui/$(id -u)/com.instant-swipe"
+iss_ok=false
+if launchctl print "$ISS_LABEL" 2>/dev/null | grep -q "state = running" \
+    && ! tail -n 1 "$HOME/Library/Logs/iss.log" 2>/dev/null | grep -qE "removed|disabled"; then
+    iss_ok=true
+fi
+
+#######################################
 # Summary
 #######################################
 
@@ -90,6 +104,17 @@ else
     echo "    Enable it in System Settings > Privacy & Security > FileVault,"
     echo "    or run: sudo fdesetup enable"
     echo "    Store the recovery key it prints somewhere safe."
+fi
+
+if [ "$iss_ok" = true ]; then
+    echo -e "  ${GREEN}✓${NC} Instant space switching active"
+elif [ ! -x "$ISS_BIN" ]; then
+    echo -e "  ${RED}✗${NC} Instant space switching is not installed"
+    echo "    Re-run chezmoi apply and check the iss install output."
+else
+    echo -e "  ${YELLOW}!${NC} Instant space switching needs Accessibility permission"
+    echo "    Allow $ISS_BIN in System Settings > Privacy & Security > Accessibility."
+    echo "    It cannot be scripted, as macOS protects that permission."
 fi
 
 if [ "$text_size_ok" != true ]; then

@@ -1,0 +1,62 @@
+#!/bin/bash
+
+set -e
+
+{{- if ne .chezmoi.os "darwin" }}
+echo "Skipping iss (not running macOS)"
+exit 0
+{{- end }}
+
+# iss removes the slide animation from three-finger swipes between Spaces.
+# It is built from source at a pinned commit, as it has no signed release.
+# LaunchAgent hash: {{ include "private_Library/LaunchAgents/com.instant-swipe.plist.tmpl" | sha256sum }}
+ISS_REPO="https://github.com/joshuarli/iss.git"
+ISS_COMMIT="493b008f2ea8e9215877c39700e8ea3add800e97"
+
+BIN="$HOME/.local/bin/iss"
+LABEL="com.instant-swipe"
+PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
+DOMAIN="gui/$(id -u)"
+
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+echo "Installing iss..."
+
+if ! xcrun --find cc >/dev/null 2>&1; then
+    echo -e "${YELLOW}Could not build iss: no C compiler. Run xcode-select --install, then chezmoi apply.${NC}"
+    exit 1
+fi
+
+src="$(mktemp -d)"
+trap 'rm -rf "$src"' EXIT
+
+# Fetching by commit makes git verify the source matches the pinned hash.
+git -C "$src" init -q
+git -C "$src" fetch -q --depth 1 "$ISS_REPO" "$ISS_COMMIT"
+git -C "$src" checkout -q FETCH_HEAD
+make -s -C "$src" iss
+codesign -fs - "$src/iss" 2>/dev/null
+
+# Accessibility is granted to the exact binary, so an identical rebuild is
+# left in place to keep the grant.
+if cmp -s "$src/iss" "$BIN"; then
+    echo -e "${GREEN}✓${NC} iss is already up to date"
+else
+    install -d "$(dirname "$BIN")"
+    install -m 755 "$src/iss" "$BIN"
+    echo -e "${YELLOW}iss was installed or updated, so it needs Accessibility permission.${NC}"
+    echo "  Allow $BIN in System Settings > Privacy & Security > Accessibility."
+fi
+
+# bootout returns before the job has fully stopped, and bootstrapping over a
+# job that is still stopping fails.
+launchctl bootout "$DOMAIN/$LABEL" 2>/dev/null || true
+for _ in $(seq 1 50); do
+    launchctl print "$DOMAIN/$LABEL" >/dev/null 2>&1 || break
+    sleep 0.1
+done
+launchctl bootstrap "$DOMAIN" "$PLIST"
+
+echo -e "${GREEN}✓${NC} iss launch agent loaded"
