@@ -21,10 +21,14 @@
       "type": "remote",
       "url": "https://mcp.posthog.com/mcp"
     },
-    "metabase": {
+    "metabase-zerobased": {
       "type": "remote",
       "url": "https://metabase.zerobased.co.uk/api/metabase-mcp",
       "enabled": false
+    },
+    "gitlab-zerobased": {
+      "type": "remote",
+      "url": "https://git.zerobased.dev/api/v4/mcp"
     }
   }
 }
