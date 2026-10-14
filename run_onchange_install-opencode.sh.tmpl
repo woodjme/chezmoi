@@ -1,0 +1,20 @@
+{{- if .installAITools -}}
+#!/bin/bash
+# Install OpenCode 2. Its installer replaces an OpenCode 1 binary in ~/.opencode/bin.
+set -euo pipefail
+
+GREEN='\033[0;32m'
+NC='\033[0m'
+
+version="$("$HOME/.opencode/bin/opencode" --version 2>/dev/null || true)"
+version="${version#opencode }"
+version="${version#v}"
+major="${version%%.*}"
+
+if [[ "$major" =~ ^[0-9]+$ ]] && (( major >= 2 )); then
+    echo -e "${GREEN}✓${NC} OpenCode $version is already installed"
+    exit 0
+fi
+
+curl -fsSL https://opencode.ai/v2/install | bash -s -- --no-modify-path
+{{ end -}}

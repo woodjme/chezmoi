@@ -122,11 +122,6 @@ if ! check_installed e1s; then
     brew install keidarcy/tap/e1s
 fi
 
-# opencode
-if [[ $INSTALL_AI_TOOLS =~ ^[Yy]$ ]] && ! check_installed opencode; then
-    curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path
-fi
-
 # Claude Code. The @latest cask tracks newer builds than the plain claude-code
 # cask, and provides the claude binary rather than an app bundle.
 if [[ $INSTALL_AI_TOOLS =~ ^[Yy]$ ]]; then
@@ -295,11 +290,6 @@ if ! check_installed e1s; then
     rm /tmp/e1s.tar.gz
 fi
 
-# opencode
-if [[ $INSTALL_AI_TOOLS =~ ^[Yy]$ ]] && ! check_installed opencode; then
-    curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path
-fi
-
 # AWS Session Manager Plugin
 if ! check_installed session-manager-plugin; then
     sudo dnf install -y https://s3.amazonaws.com/session-manager-downloads/plugin/latest/linux_64bit/session-manager-plugin.rpm
@@ -460,11 +450,6 @@ if ! check_installed e1s; then
     tar -xzf /tmp/e1s.tar.gz -C /tmp
     sudo mv /tmp/e1s /usr/local/bin/
     rm /tmp/e1s.tar.gz
-fi
-
-# opencode
-if [[ $INSTALL_AI_TOOLS =~ ^[Yy]$ ]] && ! check_installed opencode; then
-    curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path
 fi
 
 # AWS Session Manager Plugin

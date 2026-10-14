@@ -1,34 +1,43 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "autoupdate": false,
-  "theme": "system",
-  "plugin": [
-    "opencode-claude-auth@2.2.1",
-    "opencode-history-search@1.5.1",
-    "envsitter-guard@latest",
-    "opencode-image-resizer@latest",
-    "./vendor/i-have-adhd/.opencode/plugins/i-have-adhd.mjs"
+  "update": "disable",
+  "plugins": [
+    "opencode-claude-auth-v2@0.4.0-beta.6"
   ],
-  "permission": {
-    "websearch": "allow"
+  "permissions": [
+    { "action": "websearch", "resource": "*", "effect": "allow" }
+  ],
+  "websearch": {
+    "provider": "random"
+  },
+  "media": {
+    "image": {
+      "auto_resize": true
+    }
   },
   "mcp": {
-    "todoist": {
-      "type": "remote",
-      "url": "https://ai.todoist.net/mcp"
-    },
-    "posthog": {
-      "type": "remote",
-      "url": "https://mcp.posthog.com/mcp"
-    },
-    "metabase-zerobased": {
-      "type": "remote",
-      "url": "https://metabase.zerobased.co.uk/api/metabase-mcp",
-      "enabled": false
-    },
-    "gitlab-zerobased": {
-      "type": "remote",
-      "url": "https://git.zerobased.dev/api/v4/mcp"
+    "servers": {
+      "todoist": {
+        "type": "remote",
+        "url": "https://ai.todoist.net/mcp"
+      },
+      "posthog": {
+        "type": "remote",
+        "url": "https://mcp.posthog.com/mcp"
+      },
+      "metabase-zerobased": {
+        "type": "remote",
+        "url": "https://metabase.zerobased.co.uk/api/metabase-mcp",
+        "disabled": true
+      },
+      "gitlab-zerobased": {
+        "type": "remote",
+        "url": "https://git.zerobased.dev/api/v4/mcp"
+      },
+      "openflowkit": {
+        "type": "local",
+        "command": ["npx", "-y", "@vrun-design/openflowkit-mcp"]
+      }
     }
   }
 }
