@@ -2,7 +2,8 @@
   "$schema": "https://opencode.ai/config.json",
   "update": "disable",
   "plugins": [
-    "@ex-machina/opencode-anthropic-auth@next"
+    "@ex-machina/opencode-anthropic-auth@next",
+    "git+https://git.zerobased.dev/woodjme/opencode-history-search.git#v0.1.0"
   ],
   "permissions": [
     { "action": "websearch", "resource": "*", "effect": "allow" },
