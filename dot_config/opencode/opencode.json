@@ -5,7 +5,22 @@
     "@ex-machina/opencode-anthropic-auth@next"
   ],
   "permissions": [
-    { "action": "websearch", "resource": "*", "effect": "allow" }
+    { "action": "websearch", "resource": "*", "effect": "allow" },
+    { "action": "read", "resource": "*.env", "effect": "deny" },
+    { "action": "read", "resource": "*.env.*", "effect": "deny" },
+    { "action": "edit", "resource": "*.env", "effect": "deny" },
+    { "action": "edit", "resource": "*.env.*", "effect": "deny" },
+    { "action": "read", "resource": "*.env.example", "effect": "allow" },
+    { "action": "read", "resource": "*.env.sample", "effect": "allow" },
+    { "action": "read", "resource": "*.env.template", "effect": "allow" },
+    { "action": "read", "resource": "*.env.dist", "effect": "allow" },
+    { "action": "read", "resource": "*.env.default", "effect": "allow" },
+    { "action": "edit", "resource": "*.env.example", "effect": "allow" },
+    { "action": "edit", "resource": "*.env.sample", "effect": "allow" },
+    { "action": "edit", "resource": "*.env.template", "effect": "allow" },
+    { "action": "edit", "resource": "*.env.dist", "effect": "allow" },
+    { "action": "edit", "resource": "*.env.default", "effect": "allow" },
+    { "action": "read", "resource": "*.envsitter/*", "effect": "deny" }
   ],
   "websearch": {
     "provider": "random"
