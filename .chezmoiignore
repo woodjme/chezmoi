@@ -7,6 +7,8 @@
 /.config/opencode/AGENTS.md
 /.claude/CLAUDE.md
 /.claude/skills
+/.claude/keybindings.json
+/.claude/mods
 {{- end }}
 {{ if ne .fedoraHostname "fedora-desktop" -}}
 .config/OpenRGB/
@@ -18,3 +20,6 @@ Library
 {{ if not .installDesktopApps -}}
 Library/LaunchAgents/local.InstantSpaceSwitcher.plist
 {{- end }}
+
+# Written by Claude Code when it loads a mod
+.claude/mods/*/.claude-plugin/types

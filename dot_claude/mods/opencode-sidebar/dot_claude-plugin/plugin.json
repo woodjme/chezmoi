@@ -1,0 +1,9 @@
+{
+  "name": "opencode-sidebar",
+  "version": "0.1.0",
+  "description": "OpenCode-style right-hand sidebar: session title, context usage, cost, MCP servers, modified files, todos, directory and branch",
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "Jamie"
+  }
+}

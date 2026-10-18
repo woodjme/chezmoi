@@ -1,0 +1,28 @@
+{{- if .installAITools -}}
+{{- $marketplace := include "dot_claude/mods/dot_claude-plugin/marketplace.json" | fromJson -}}
+#!/bin/bash
+# Registers ~/.claude/mods as a local Claude Code marketplace and installs every mod it lists.
+# Claude Code records installs in ~/.claude/settings.json, which it rewrites itself, so that file stays unmanaged.
+# marketplace.json hash: {{ include "dot_claude/mods/dot_claude-plugin/marketplace.json" | sha256sum }}
+set -euo pipefail
+
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+NC='\033[0m'
+
+if ! command -v claude >/dev/null 2>&1; then
+    echo -e "${YELLOW}!${NC} Claude Code is not installed; skipping Claude Code mods"
+    exit 0
+fi
+
+if ! claude plugin marketplace list 2>/dev/null | grep -qF "{{ $marketplace.name }}"; then
+    claude plugin marketplace add "$HOME/.claude/mods" --scope user
+fi
+{{ range $marketplace.plugins }}
+if claude plugin list 2>/dev/null | grep -qF "{{ .name }}@{{ $marketplace.name }}"; then
+    echo -e "${GREEN}✓${NC} Claude Code mod {{ .name }} is already installed"
+else
+    claude plugin install "{{ .name }}@{{ $marketplace.name }}" --scope user
+fi
+{{ end }}
+{{ end -}}

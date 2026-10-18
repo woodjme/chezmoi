@@ -1,0 +1,17 @@
+{
+  "name": "jamie-mods",
+  "description": "Jamie's personal Claude Code mods",
+  "owner": {
+    "name": "Jamie"
+  },
+  "plugins": [
+    {
+      "name": "opencode-sidebar",
+      "source": "./opencode-sidebar"
+    },
+    {
+      "name": "env-guard",
+      "source": "./env-guard"
+    }
+  ]
+}
