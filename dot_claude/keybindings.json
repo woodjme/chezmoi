@@ -1,0 +1,19 @@
+{
+  "$schema": "https://www.schemastore.org/claude-code-keybindings.json",
+  "$docs": "https://code.claude.com/docs/en/keybindings",
+  "bindings": [
+    {
+      "context": "Global",
+      "bindings": {
+        "ctrl+x s": "app:toggleReplTab",
+        "ctrl+t": "app:toggleDiffNoiseFilter"
+      }
+    },
+    {
+      "context": "Chat",
+      "bindings": {
+        "ctrl+x m": "chat:modelPicker"
+      }
+    }
+  ]
+}
