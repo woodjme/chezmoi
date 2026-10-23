@@ -30,6 +30,20 @@ const TOGGLE_ACTION = 'app:toggleReplTab'
 // Same trick for ctrl+t: this action's own handler only mounts while the diff panel is open.
 const EFFORT_ACTION = 'app:toggleDiffNoiseFilter'
 const EFFORT_LEVELS: readonly EffortLevel[] = ['low', 'medium', 'high', 'xhigh', 'max']
+// Side gutter for the chat, as OpenCode has; the prompt box and the startup logo are not render sites.
+const GUTTER = 2
+const TRANSCRIPT_ROWS = [
+  'UserMessage',
+  'AssistantMessage',
+  'ToolUse',
+  'ToolResult',
+  'ToolGroup',
+  'ToolProgress',
+  'CommandOutput',
+  'Spinner',
+  'TurnDuration',
+  'InfoNotice',
+] as const
 const MINUTE = 60_000
 const HOUR = 60 * MINUTE
 const DAY = 24 * HOUR
@@ -125,6 +139,18 @@ export const register: Register = on => {
       </Box>
     )
   })
+
+  on('ui.render', { component: TRANSCRIPT_ROWS }, async ($, e, next) => {
+    const row = await next(e)
+    if (e.surface !== 'terminal') return row
+    const { Box } = $.ui.resolve(e)
+
+    return (
+      <Box paddingX={GUTTER} flexDirection="column">
+        {row}
+      </Box>
+    )
+  }).catch(($, e, next) => next(e))
 
   on('turn.start', async ($, e, next) => {
     if (e.agentId === undefined) await syncEffortModel($, await $.session.model())

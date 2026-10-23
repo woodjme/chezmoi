@@ -150,6 +150,24 @@ test('footer right side keeps the mode labels and adds the model and the sidebar
   await ui.unmount()
 })
 
+test('chat rows sit inside a side gutter on the terminal only', async ($, on) => {
+  on('ui.render', { component: 'AssistantMessage' }, ($, e) => {
+    const { Text } = $.ui.resolve(e)
+
+    return <Text>reply</Text>
+  })
+  const props = { content: [{ type: 'text', text: 'reply' }], isStreaming: false } as never
+
+  const terminal = await $.ui.mount({ plugin: 'opencode-sidebar', surface: 'terminal', component: 'AssistantMessage', props })
+  expect(await terminal.drawn()).toMatchObject({ type: 'Box', props: { paddingX: 2 } })
+  expect(await terminal.find({ text: /reply/ })).toBeDefined()
+  await terminal.unmount()
+
+  const desktop = await $.ui.mount({ plugin: 'opencode-sidebar', surface: 'desktop', component: 'AssistantMessage', props })
+  expect(await desktop.drawn()).toMatchObject({ type: 'Text' })
+  await desktop.unmount()
+})
+
 const FOOTER = {
   plugin: 'opencode-sidebar',
   surface: 'terminal',
