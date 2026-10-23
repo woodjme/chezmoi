@@ -1,8 +1,0 @@
-{
-  "name": "env-guard",
-  "version": "0.1.0",
-  "description": "Keeps agents out of .env files: refuses reads and edits, blocks shell commands that name them, and strips their lines from search output",
-  "author": {
-    "name": "Jamie"
-  }
-}

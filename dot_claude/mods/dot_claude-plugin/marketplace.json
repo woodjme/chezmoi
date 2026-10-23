@@ -8,10 +8,6 @@
     {
       "name": "opencode-sidebar",
       "source": "./opencode-sidebar"
-    },
-    {
-      "name": "env-guard",
-      "source": "./env-guard"
     }
   ]
 }
