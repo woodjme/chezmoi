@@ -2,7 +2,7 @@
 {{- $marketplace := include "dot_claude/mods/dot_claude-plugin/marketplace.json" | fromJson -}}
 #!/bin/bash
 # Registers ~/.claude/mods as a local Claude Code marketplace and installs every mod it lists.
-# Claude Code records installs in ~/.claude/settings.json, which it rewrites itself, so that file stays unmanaged.
+# Claude Code records installs in ~/.claude/settings.json, which it rewrites itself, so modify_settings.json only enforces a few keys.
 # marketplace.json hash: {{ include "dot_claude/mods/dot_claude-plugin/marketplace.json" | sha256sum }}
 set -euo pipefail
 

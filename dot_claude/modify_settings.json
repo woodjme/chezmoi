@@ -1,0 +1,18 @@
+{{- /* chezmoi:modify-template */ -}}
+{{- /* Claude Code rewrites settings.json itself, so only enforce the keys below and keep everything else it writes. */ -}}
+{{- $managed := dict "idleCompaction" false -}}
+{{- $settings := dict -}}
+{{- if .chezmoi.stdin | trim -}}
+{{-   $settings = .chezmoi.stdin | fromJson -}}
+{{- end -}}
+{{- $needsUpdate := false -}}
+{{- range $key, $value := $managed -}}
+{{-   if or (not (hasKey $settings $key)) (ne (toJson (get $settings $key)) (toJson $value)) -}}
+{{-     $needsUpdate = true -}}
+{{-   end -}}
+{{- end -}}
+{{- if $needsUpdate -}}
+{{ mergeOverwrite $settings $managed | toPrettyJson }}
+{{ else -}}
+{{ .chezmoi.stdin }}
+{{- end -}}

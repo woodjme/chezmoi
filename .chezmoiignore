@@ -8,6 +8,7 @@
 /.claude/CLAUDE.md
 /.claude/skills
 /.claude/keybindings.json
+/.claude/settings.json
 /.claude/mods
 {{- end }}
 {{ if ne .fedoraHostname "fedora-desktop" -}}
