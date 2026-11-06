@@ -79,6 +79,17 @@ if [ "$(defaults read com.apple.universalaccess reduceMotion 2>/dev/null)" = "1"
 fi
 
 #######################################
+# iCloud Desktop & Documents
+#######################################
+
+# Cannot be scripted: iCloud owns the setting. Finder mirrors its state, and
+# reading Finder's copy avoids the prompt for access to ~/Desktop.
+icloud_desktop_ok=false
+if [ "$(defaults read com.apple.finder FXICloudDriveDesktop 2>/dev/null)" = "1" ]; then
+    icloud_desktop_ok=true
+fi
+
+#######################################
 # Instant space switching
 #######################################
 
@@ -121,6 +132,12 @@ if [ "$reduce_motion_ok" != true ]; then
     echo -e "  ${YELLOW}!${NC} Reduce motion is off, so macOS animations slide and zoom"
     echo "    Turn it on in System Settings > Accessibility > Motion > Reduce motion."
     echo "    It cannot be scripted, as macOS protects that preference."
+fi
+
+if [ "$icloud_desktop_ok" != true ]; then
+    echo -e "  ${YELLOW}!${NC} Desktop and Documents are not syncing with iCloud"
+    echo "    Turn on Desktop & Documents Folders in System Settings > your name >"
+    echo "    iCloud > iCloud Drive. It cannot be scripted, as iCloud owns that setting."
 fi
 
 if [ "$iss_running" != true ]; then
