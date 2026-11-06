@@ -1,0 +1,41 @@
+#!/bin/bash
+
+set -e
+
+{{- if ne .chezmoi.os "darwin" }}
+exit 0
+{{- end }}
+
+# Apps that ship with macOS but come from the App Store, so they can be
+# deleted. Journal and Image Playground live on the sealed system volume and
+# cannot be.
+paths=(
+    "/Applications/GarageBand.app"
+    "/Applications/iMovie.app"
+    "/Applications/Keynote.app"
+    "/Applications/Numbers.app"
+    "/Applications/Pages.app"
+    "/Library/Application Support/GarageBand"
+)
+
+# Logic Pro shares GarageBand's loop library.
+if [ ! -d "/Applications/Logic Pro.app" ]; then
+    paths+=("/Library/Audio/Apple Loops")
+fi
+
+to_remove=()
+for path in "${paths[@]}"; do
+    if [ -e "$path" ]; then
+        to_remove+=("$path")
+    fi
+done
+
+if [ ${#to_remove[@]} -eq 0 ]; then
+    exit 0
+fi
+
+echo "Removing unused Apple apps..."
+for path in "${to_remove[@]}"; do
+    echo "  $path"
+    sudo rm -rf "$path"
+done
