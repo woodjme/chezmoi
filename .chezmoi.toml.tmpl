@@ -1,13 +1,11 @@
 {{- $email := promptStringOnce . "email" "Git email address" -}}
 {{- $name := "Jamie Wood" -}}
 {{- $install1Password := promptBoolOnce . "install1Password" "Install 1Password for SSH keys (installs first, will pause for setup) (y/n)" -}}
+{{- /* User ID on my.1password.com. An identifier, not a credential: signing in still needs the password and Secret Key. */ -}}
+{{- $onepasswordAccount := "VPQCCQFI3JDYXFMSOBODVLTKZM" -}}
 {{- $use1PasswordAWS := false -}}
-{{- $onepasswordAccount := "" -}}
 {{- if $install1Password -}}
 {{- $use1PasswordAWS = promptBoolOnce . "use1PasswordAWS" "Template AWS config/credentials from 1Password documents (requires 1Password CLI and documents named 'aws-config' and 'aws-credentials') (y/n)" -}}
-{{- if $use1PasswordAWS -}}
-{{- $onepasswordAccount = promptStringOnce . "onepasswordAccount" "1Password account for those documents, as an email or account UUID (press Enter to skip unless signed in to several accounts)" -}}
-{{- end -}}
 {{- end -}}
 {{- $useCommitSigning := promptBoolOnce . "useCommitSigning" "Enable git commit signing (y/n)" -}}
 {{- $use1PasswordSign := false -}}

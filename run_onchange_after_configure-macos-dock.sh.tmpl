@@ -1,0 +1,65 @@
+#!/bin/bash
+
+set -e
+
+{{- if ne .chezmoi.os "darwin" }}
+exit 0
+{{- end }}
+
+# Runs after the app installs, as tiles for apps that are not installed yet are
+# skipped.
+
+echo "Configuring the Dock..."
+
+#######################################
+# Dock appearance
+#######################################
+
+defaults write com.apple.dock tilesize -int 44
+defaults write com.apple.dock orientation -string bottom
+defaults write com.apple.dock autohide -bool false
+defaults write com.apple.dock magnification -bool false
+defaults write com.apple.dock show-recents -bool false
+defaults write com.apple.dock show-process-indicators -bool true
+
+#######################################
+# Dock contents
+#######################################
+
+# Pinned apps, in order. Entries whose app is not installed are skipped so a
+# machine missing one gets a shorter dock rather than a broken tile.
+dock_apps=(
+    "/Applications/Brave Browser.app"
+    "/Applications/Ghostty.app"
+    "/Applications/Visual Studio Code.app"
+    "/System/Applications/Messages.app"
+    "/Applications/Todoist.app"
+    "/System/Applications/Mail.app"
+    "/System/Applications/Calendar.app"
+    "/System/Applications/Notes.app"
+    "/Applications/1Password.app"
+    "/Applications/Slack.app"
+)
+
+# The Dock regenerates bookmark, label and icon metadata on restart, so a tile
+# only needs to declare its URL.
+dock_tile() {
+    printf '<dict><key>tile-data</key><dict><key>file-data</key><dict><key>_CFURLString</key><string>file://%s/</string><key>_CFURLStringType</key><integer>15</integer></dict></dict><key>tile-type</key><string>file-tile</string></dict>' "${1// /%20}"
+}
+
+dock_tiles=()
+for app in "${dock_apps[@]}"; do
+    if [ -e "$app" ]; then
+        dock_tiles+=("$(dock_tile "$app")")
+    else
+        echo "  Skipping dock entry, app not installed: $app"
+    fi
+done
+
+if [ ${#dock_tiles[@]} -gt 0 ]; then
+    defaults write com.apple.dock persistent-apps -array "${dock_tiles[@]}"
+fi
+
+killall Dock || true
+
+echo "Dock configured."
