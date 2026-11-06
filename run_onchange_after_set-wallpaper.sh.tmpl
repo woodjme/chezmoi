@@ -1,0 +1,78 @@
+#!/bin/bash
+
+set -euo pipefail
+
+{{- if ne .chezmoi.os "darwin" }}
+exit 0
+{{- end }}
+
+# Wallpaper hash: {{ include "Pictures/Wallpapers/jack-white-pkvecakeQjo-unsplash.jpg" | sha256sum }}
+WALLPAPER="$HOME/Pictures/Wallpapers/jack-white-pkvecakeQjo-unsplash.jpg"
+STORE="$HOME/Library/Application Support/com.apple.wallpaper/Store/Index.plist"
+
+# System Events can only pin a picture to each display, so the store is
+# written directly, the way System Settings saves "Show on all Spaces".
+
+echo "Setting the wallpaper..."
+
+workdir=$(mktemp -d)
+trap 'rm -rf "$workdir"' EXIT
+
+encode() {
+    printf '%s' "$1" | plutil -convert binary1 -o - -- - | base64
+}
+
+configuration=$(encode "{\"type\":\"imageFile\",\"url\":{\"relative\":\"file://${WALLPAPER// /%20}\"}}")
+options=$(encode '{"values":{}}')
+now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+linked="<dict>
+    <key>Linked</key>
+    <dict>
+        <key>Content</key>
+        <dict>
+            <key>Choices</key>
+            <array>
+                <dict>
+                    <key>Configuration</key>
+                    <data>$configuration</data>
+                    <key>Files</key>
+                    <array/>
+                    <key>Provider</key>
+                    <string>com.apple.wallpaper.choice.image</string>
+                </dict>
+            </array>
+            <key>EncodedOptionValues</key>
+            <data>$options</data>
+            <key>Shuffle</key>
+            <string>\$null</string>
+        </dict>
+        <key>LastSet</key>
+        <date>$now</date>
+        <key>LastUse</key>
+        <date>$now</date>
+    </dict>
+    <key>Type</key>
+    <string>linked</string>
+</dict>"
+
+cat >"$workdir/Index.plist" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>AllSpacesAndDisplays</key>
+    $linked
+    <key>Displays</key>
+    <dict/>
+    <key>Spaces</key>
+    <dict/>
+    <key>SystemDefault</key>
+    $linked
+</dict>
+</plist>
+EOF
+
+mkdir -p "$(dirname "$STORE")"
+plutil -convert binary1 -o "$STORE" "$workdir/Index.plist"
+killall WallpaperAgent 2>/dev/null || true
