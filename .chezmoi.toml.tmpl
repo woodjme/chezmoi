@@ -38,3 +38,7 @@
     installAITools = {{ $installAITools }}
     useNvimSSH = {{ $useNvimSSH }}
     fedoraHostname = {{ $fedoraHostname | quote }}
+
+[scriptEnv]
+    # Homebrew 7 asks before every install by default, which stalls unattended setup.
+    HOMEBREW_NO_ASK = "1"
