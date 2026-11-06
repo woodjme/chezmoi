@@ -1,0 +1,92 @@
+#!/bin/bash
+
+set -euo pipefail
+
+{{- if or (ne .chezmoi.os "darwin") (not .use1PasswordAWS) }}
+exit 0
+{{- end }}
+
+# Adds the IMAP logins tagged mail-account in the Chezmoi 1Password vault to
+# Mail, through a configuration profile. Addresses, servers and passwords all
+# come from 1Password, so none of them are in this repo. Google and iCloud
+# accounts need an interactive sign in, so they are added by hand.
+
+ACCOUNT={{ .onepasswordAccount | quote }}
+VAULT=Chezmoi
+TAG=mail-account
+
+ids=$(op item list --account "$ACCOUNT" --vault "$VAULT" --tags "$TAG" --format json | jq -r '.[].id')
+if [ -z "$ids" ]; then
+    exit 0
+fi
+
+# Mailboxes already in Mail are skipped, so a configured Mac gets no
+# duplicates. The database is unreadable without Full Disk Access, which only
+# matters on a Mac that already has accounts.
+existing=$(sqlite3 -readonly "$HOME/Library/Accounts/Accounts4.sqlite" \
+    "select a.ZUSERNAME from ZACCOUNT a join ZACCOUNTTYPE t on a.ZACCOUNTTYPE = t.Z_PK where t.ZIDENTIFIER = 'com.apple.account.IMAP'" \
+    2>/dev/null || true)
+
+workdir=$(mktemp -d)
+trap 'rm -rf "$workdir"' EXIT
+
+added=()
+for id in $ids; do
+    item=$(op item get "$id" --account "$ACCOUNT" --vault "$VAULT" --reveal --format json)
+    email=$(jq -r '.fields[] | select(.label == "username") | .value' <<<"$item")
+
+    if grep -qxF "$email" <<<"$existing"; then
+        continue
+    fi
+
+    jq --arg uuid "$(uuidgen)" '
+        def field($label): first(.fields[] | select(.label == $label) | .value);
+        {
+            PayloadType: "com.apple.mail.managed",
+            PayloadVersion: 1,
+            PayloadIdentifier: ("local.chezmoi.mail." + (field("username") | gsub("[^A-Za-z0-9.-]"; "-"))),
+            PayloadUUID: $uuid,
+            PayloadDisplayName: field("account name"),
+            EmailAccountType: "EmailTypeIMAP",
+            EmailAccountDescription: field("account name"),
+            EmailAccountName: field("full name"),
+            EmailAddress: field("username"),
+            IncomingMailServerHostName: field("server"),
+            IncomingMailServerPortNumber: (field("imap port") | tonumber),
+            IncomingMailServerUseSSL: true,
+            IncomingMailServerAuthentication: "EmailAuthPassword",
+            IncomingMailServerUsername: field("username"),
+            IncomingPassword: field("password"),
+            OutgoingMailServerHostName: field("server"),
+            OutgoingMailServerPortNumber: (field("smtp port") | tonumber),
+            OutgoingMailServerUseSSL: true,
+            OutgoingMailServerAuthentication: "EmailAuthPassword",
+            OutgoingMailServerUsername: field("username"),
+            OutgoingPassword: field("password")
+        }' <<<"$item" >"$workdir/payload-$id.json"
+    added+=("$email")
+done
+
+if [ ${#added[@]} -eq 0 ]; then
+    exit 0
+fi
+
+profile="$workdir/Mail accounts.mobileconfig"
+jq -s --arg uuid "$(uuidgen)" '{
+    PayloadType: "Configuration",
+    PayloadVersion: 1,
+    PayloadIdentifier: "local.chezmoi.mail-accounts",
+    PayloadUUID: $uuid,
+    PayloadDisplayName: "Mail accounts",
+    PayloadScope: "User",
+    PayloadContent: .
+}' "$workdir"/payload-*.json >"$workdir/profile.json"
+plutil -convert xml1 -o "$profile" "$workdir/profile.json"
+
+echo ""
+echo "Adding Mail accounts for: ${added[*]}"
+echo "macOS only installs profiles you approve, so it opens in System Settings."
+open "$profile"
+echo "Install 'Mail accounts' in System Settings > General > Device Management,"
+echo -n "then press Enter. The profile holds passwords, so it is deleted after..."
+read -r || true
